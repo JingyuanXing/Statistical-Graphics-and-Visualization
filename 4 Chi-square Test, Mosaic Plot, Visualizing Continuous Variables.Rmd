@@ -1,0 +1,237 @@
+---
+title: "36-315 Lab 04"
+author: "Jingyuan Xing"
+date: "Due Sep 20 2019 (6:30pm)"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+***
+***
+
+
+#  Problem 1
+
+(5 points each)
+
+**Chi-Square Tests for Independence in `R`**:  
+
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(reshape2)
+
+#  Read in data
+airline_tweets <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/Tweets.csv")
+
+date_time <- colsplit(airline_tweets$tweet_created, " ", c("date", "time", "zone"))
+
+#  Add start_date variable to airline_tweets, and a bunch of other variables
+airline_tweets <- mutate(airline_tweets,
+                    start_date = as.Date(date_time$date, format = "%Y-%m-%d"),
+                    hour_of_day = as.integer(substr(date_time$time, 1, 2)),
+                    am_or_pm = ifelse(hour_of_day < 12, "AM", "PM"),
+                    day_of_week = weekdays(start_date),
+                    weekend = ifelse(day_of_week %in% c("Saturday", "Sunday"), 
+                                     "Weekend", "Weekday"),
+                    tweet_length = ifelse(nchar(text) > 100, "Long", "Short"))
+```
+
+a.  
+
+```{r, warning = F, message = F}
+tab1a <- table(airline_tweets$airline, airline_tweets$airline_sentiment)
+chisq.test((tab1a))
+```
+
++  Chi-square test gives us the X-squared value, the degree of freedom, and the p-value.
++  The chi-square test statistic is 1154
++  The p-value of the test is less than 2.2e-16 
++  Since the p-value is less than 0.05, we reject the null, there is sufficient evidence to reject the null hypothesis which says the two variables are independent.
+
+b. 
+
+```{r, warning = F, message = F}
+tab1b <- order(tab1a)
+chisq.test(tab1b)
+```
+
+The test result doesn't change. This does make sense, because the chi-square test statistics is testing the independence relationship between the two variables, regardless of the ordering of data.
+
+c. 
+
+```{r, warning = F, message = F}
+tab1c <- table(airline_tweets$day_of_week, airline_tweets$am_or_pm)
+chisq.test((tab1c))
+print(tab1c)
+```
+
+This time, the result of the chi-square test has p-value of less than 2.2e-16, which is less than 0.05, so we reject the null hypothesis. In the context of this problem, this menas that we have sufficient evidence to reject the null, which means we cannot say the two variables day_of_week and am_or_pm is independent. It does make sense that they are dependent, because there are a lot more tweets sent on Saturday and Sunday afternoons, because people tend to sleep on weekend mornings so very few people are tweeting.
+
+d. 
+
+
+```{r, warning = F, message = F}
+tab1d <- table(airline_tweets$am_or_pm, airline_tweets$tweet_length)
+chisq.test((tab1d))
+print(tab1d)
+```
+
+This time the result of chi-square test shows the p-value is 0.045, which is less than 0.05, so we still reject the null. Meaning that we conclude that there is sufficient evidence to reject the null which says the two are independent. Thus we say that am_or_pm and tweet_length are dependent. This does make sense because in the morning people are busy with work so they tweet shorter, and in the afternoon they are enjoying their free time so they make longer tweets. However, note that we are not that confident to reject the null, because 0.4563 is very close to 0.05.
+
+***
+***
+
+
+#  Problem 2
+
+**Mosaic Plots**
+
+NOTE: If the ggplot version of mosaic does not work,
+use the basic R command: mosaicplot
+
+
+```{r, warning = FALSE, message=F}
+library(matrixStats)
+```
+
+In order to use `geom_mosaic()`, you need to download it from the course GitHub page.  To do this, first **install the `devtools` package.**  Use the following code to source the `geom_mosaic()` function code:
+
+```{r, warning = F, message = F}
+source("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/code/geom_mosaic.R")
+```
+
+2a. 
+
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = airline, y = airline_sentiment)) +
+  geom_mosaic() + mosaic_legend() +
+  labs(title = "Mosaic plot of airline sentiment with respect to airlines",
+       y = "Airline Sentiment",
+       x = "Airlines")
+```
+
+2b. 
+
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = airline, y = airline_sentiment)) +
+  geom_mosaic() + mosaic_legend() +
+  labs(title = "Mosaic plot of airline sentiment with respect to airlines",
+       y = "Airline Sentiment",
+       x = "Airlines")
+```
+
+2c. 
+
+
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = day_of_week, y = am_or_pm)) +
+  geom_mosaic() + mosaic_legend() +
+  labs(title = "Mosaic plot of day of week with respect to am/pm",
+       x = "Day of week",
+       y = "Am or Pm")
+```
+
+2d.
+
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = am_or_pm, y = tweet_length)) +
+  geom_mosaic() + mosaic_legend() +
+  labs(title = "Mosaic plot of Am/Pm with respect to tweet length",
+       x = "Am/Pm",
+       y = "Tweet length")
+```
+
+***
+***
+
+
+#  Problem 3
+
+**Interpretting Mosaic Plots**
+
+
+a.  (5 points)  The mosaic plots in Problem 2 doesn't yield the same conclusions as the chi-square tests from Problem 1. For example, for 1d, we reject the null hypothesis because p-value = 0.0463 < 0.05. However, for 2d, we failed to reject the null hypothesis because all cells are white.
+
+b.  (5 points)  The widths of the bars in the mosaic plot for Problem 2 part (c) correspond to number of data points for each Day of Week.
+
+c.  (5 points)  The heights of the bars in the mosaic plot for Problem 2 part (d) correspond to number of data points for short and long tweets correspondingly.
+
+d.  (5 points)  For the mosaic plot for Problem 2 part (c), cells Monday AM, Saturday PM, Sunday PM, and Thursday AM, have observed counts that are significantly higher than what we would expect under independence. Cells Monday PM, Saturday AM, Sunday AM, and Thursday PM, have observed counts that are significantly lower than what would be expected under independence.
+
+
+***
+***
+
+
+#  Problem 4
+
+**Introduction to Continuous Data -- Histograms**
+
+a. 
+
+```{r}
+library(datasets)
+data(mtcars)
+```
+
+The description of the mtcars dataset is: The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). Some continuous variables include: Miles/(US) gallon, Number of cylinders, and Weight (1000 lbs).
+
+
+
+b.  (10 points)  
+
+```{r, warning = F, message = F}
+ggplot(mtcars, aes(x = mpg))+
+  geom_histogram()+
+  labs(title = "Histogram of Miles Per Gallon",
+       x = "Miles Per Gallon",
+       y = "Counts")
+```
+
+c.  (10 points)  
+
+```{r, warning = F, message = F}
+ggplot(mtcars, aes(x = qsec))+
+  geom_histogram(breaks = seq(14, 26, by = 2), col = "red", fill = "green", alpha = 0.2)+
+  labs(title = "Histogram of 1/4 Mile Time",
+       x = "Time to Complete a 1/4 Mile Track",
+       y = "Counts")
+```
+
++  Adding these to geom_histogram() changes the range for x-axis. The range is not limit to 14 to 26, and bins are displayed for each two seconds.
+
++  I Tried a few new values of the `alpha` parameter.  The possible values alpha can take is between 0 to 1. When we decrease alpha the color of the bars become more transparent, and when we increase alpha, the color of the bars become less transparent and more bright. The default value for alpha is 1, if not specified.
+
++  By typing `seq(14, 26, by = 2)` into the command line, we get 14 16 18 20 22 24 26. This limits the range of the graph from 14 to 26, with a difference of 2 between each two numbers.
+    
+d.  (10 points)  
+
+```{r, warning = F, message = F}
+ggplot(mtcars, aes(x = qsec))+
+  geom_histogram(binwidth = 1)+
+  labs(title = "Histogram of 1/4 Mile Time",
+       x = "Time to Complete a 1/4 Mile Track",
+       y = "Counts")
+```
+
+The binwidth function changes the width of each bin, it also correspondingly changed counts contained in each bin.
+
+e.  (10 points) 
+
+```{r, warning = F, message = F}
+ggplot(mtcars, aes(x = qsec))+
+  geom_histogram(breaks = c(0, 13, 15, 17, 17.5, 18, 20, 23), col="red", fill="green")+
+  labs(title = "Histogram of 1/4 Mile Time",
+       x = "Time to Complete a 1/4 Mile Track",
+       y = "Counts")
+```
+
+From the graph we can see the number of cars that completed a 1/4 mile track for each given time interval. There are no car which completed the track within 13 seconds. Then the fastest two cars finished the distance in 15 seconds. 7 cars completed between 15 to 17 seconds. 6 cars completed within the 0.5 seconds interval from 17 to 17.5 seconds; and 4 cars completed with the next 0.5 seconds interval from 17.5 to 18 seconds. The interval that contains the most number of cars, is from 18 seconds to 20 seconds. And there are 3 cars which completed the track using more than 20 seconds (20-23s).
+
+***
+***
