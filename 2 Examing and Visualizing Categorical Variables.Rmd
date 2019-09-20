@@ -1,0 +1,206 @@
+---
+title: "36-315 Lab 02"
+author: "Jingyuan Xing"
+date: "Due Friday, Sept 06, 2019 (6:30pm)"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 02:  Titanic!
+
+***
+***
+
+#  Problem 1
+
+(23 points)
+
+**First Steps in Data Analysis:**
+
+```{r, warning = FALSE, message = FALSE}
+#  Load the tidyverse package into R
+#  Be sure that this package is installed first!
+library(tidyverse)
+
+#  Load the data into R
+titanic <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/titanic.csv")
+
+print(titanic)
+```
+
+a. (4 points) How many rows and columns does the data have?  (Hint:  `help(nrow)`, `help(ncol)`, `help(dim)`)
+
+```{r, warning = FALSE, message = FALSE}
+nrow(titanic)
+ncol(titanic)
+```
+
+The dataset has 712 rows and 12 columns.
+
+b. (5 points)  Which variables are categorical?  (Name at least two.)
+
+Survival (0=No, 1=Yes), Pclass (1=1st, 2=2nd, 3=3rd), and Sex(male, female), are categorical.
+
+c. (5 points) Which are continuous?  (Name at least two.)
+
+Age, Ticket, and Fare, are continuous. 
+
+d. (4 points) Which, if any, of the categorical variables are ordered?  (Name one.)
+
+Pclass is ordered categorical variable.
+
+e. (5 points) Which, if any, of these variables could be seen as categorical and continuous depending upon the situtation (Name one). Explain your choice.
+
+Parch, which means number of parents and children aboard, can be seen as categorical and continuous depending on situation. For example, If we want to know about "how many" parents and children each passenger had, it can be seen as a continuous variable. On the other hand, we can put people with the same number of parents/children into groups, and study their charactistics. In this way, Parch can be seen as a categorical variable.
+
+***
+***
+
+
+#  Problem 2
+
+**Exploratory Data Analysis -- Part 1 -- Examining Categorical Variables**
+
+a.  (5 points)  How many unique values of these two variables (`Embarked` and `Pclass`) are there?  What are the unique values? Provide a **single sentence** describing what they actually mean.
+
+```{r}
+unique(titanic$Embarked)
+unique(titanic$Pclass)
+```
+
+There are 3 unique values for Embarked; it means port of emarkation; C = Cherbourg, Q = Queenstown, S = Southampton.  
+There are 3 unique values for Pclass; it menas passenger class; 1 = 1st, 2 = 2nd, 3 = 3rd.
+
+b.  (10 points)  How many of each unique value are there?  To find this out, use the following approach, which counts the number of times each category appears in a vector:
+
+```{r}
+titanic %>% 
+  group_by(Embarked) %>%
+  summarize(count = n())
+
+titanic %>% 
+  group_by(Pclass) %>%
+  summarize(count = n())
+```
+
+For Embarked: number of values for C is 130, for Q is 28, for S is 554.  
+For Pclass: number of values for first class is 184, for second class is 173, for third class is 355.
+
+***
+***
+
+
+#  Problem 3
+
+(5 points each)
+
+**Exploratory Data Analysis -- Part 2 -- Visualizing Cateogical Variables**
+
+a.  Create a bar chart that shows the distribution of the number of individuals that Embarked at each specific port as mentioned in our `titanic` dataset.  The x-axis should show the unique Embarkeds.  The y-axis should show the number of passengers that embarked at each port.  
+
+```{r, warning = FALSE, message = FALSE}
+Embarked_dist_plot <- ggplot(data = titanic, aes(x = Embarked))
+Embarked_dist_plot + geom_bar() + coord_cartesian()
+```
+
+b.  That graph is okay, but let's add a little color.  
+
+```{r, warning = FALSE, message = FALSE}
+Embarked_dist_plot + geom_bar(aes(fill = Embarked)) + coord_cartesian()
+```
+
+c.  Recall that aesthetics map pieces of the data to parts of the graph. We can also fill the bars with a single color, since the colors here aren't necessary.
+
+```{r, warning = FALSE, message = FALSE}
+Embarked_dist_plot + geom_bar(fill = "blue") + coord_cartesian()
+```
+
+d.  Okay, our graph is looking a bit better -- but we're still missing a title!
+
+```{r, warning = FALSE, message = FALSE}
+Embarked_dist_plot + geom_bar(fill = "blue") + coord_cartesian() + 
+  labs(title = "Number of People Embarked At Each Port")
+```
+
+e.  The graph already has some x- and y-axis labels, but they're kind of boring.  How does `ggplot` choose the default labels?  
+
+ggplot gives names "count" for frequency counts, and label x-axis by the variable we are working with.
+
+f.  Let's change the labels. 
+
+```{r, warning = FALSE, message = FALSE}
+Embarked_dist_plot + geom_bar(fill = "blue") + coord_cartesian() + 
+  labs(title = "Number of People Embarked At Each Port",
+       x = "Port of Embarkation",
+       y = "Number of Individuals")
+```
+
+g.  Describe the distribution you see in your bar chart. Which port did the most passengers embark on?  Which port had the fewest passengers embark on? From the graph, roughly how many people embarked at Southampton?
+
+Most passengers embarked at Southampton, fewest passengers embarked at Queenstown, roughly 480 people embarked at Southampton.
+
+h.  This is called a rose diagram.
+
+```{r, warning = FALSE, message = FALSE}
+Embarked_dist_plot + geom_bar(fill = "blue") + coord_polar() + 
+  labs(title = "Number of People Embarked At Each Port",
+       x = "S, C, Q: Port of Embarkation",
+       y = "Number of Individuals")
+```
+
+i.  Which graph do you like better?
+
+I like the bar chart better. The bar chart is easier to read, it shows the number differences between ports very clearly. Since the width is all the same, we can get information very easily by just looking at heights of the bars. It's also easier to estimate the exact number of passengers that embarked at the different ports from the bar chart. To me, rose diagram requires circle area calculation and dealing with angles, which is not intuitive and straight forward.
+
+***
+***
+
+
+#  Problem 4
+
+**Repeat Problem 3 with the `Pclass` Variable**
+
+Note:  You don't have to repeat all parts of the problem individually.  Just follow the directions below in parts (a) and (b), and be sure to answer the questions asked.
+
+a.  (12 points)  Create a bar chart that shows the distribution of the `Pclass` variable in our `titanic` dataset.
+
+```{r, warning = FALSE, message = FALSE}
+Pclass_dist_plot <- ggplot(data = titanic, aes(x = Pclass))
+Pclass_dist_plot + geom_bar(fill = "lightblue") + 
+  labs(title = "Number of People in Each Ticket Class",
+       x = "Ticket Class",
+       y = "Number of Individuals")
+```
+
+b.  (5 points)  Which class was the most common?  Which was the least common? 
+
+The 3rd class is the most common, the 2nd class is the least common.
+
+
+***
+***
+
+
+#  BONUS
+
+(5 points)  
+
+**2-Dimensional Categorical Data**
+
+Re-create the graph from problem 3, part (f), except instead of giving each bar the same blue fill, fill in each passenger class' bar with multiple colors -- proportional to the frequency of which of the three ports these passengers embarked. Hint:  This is easier to do than it sounds with `ggplot`.  You need to map a piece of the data (`Pclass`) to a piece of the graph (the fill color of the bars).
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(data = titanic, aes(x = Embarked, fill=factor(Pclass))) + 
+  geom_bar() + 
+  labs(title = "Number of People Embarked At Each Port",
+       x = "Port of Embarkation",
+       y = "Number of Individuals")
+```
+
+
+***
+***
