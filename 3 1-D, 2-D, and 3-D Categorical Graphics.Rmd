@@ -1,0 +1,193 @@
+---
+title: "36-315 Lab 03"
+author: "Jingyuan Xing"
+date: "Due Friday, Sept 13, 2019 (6:30pm)"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 03 (Analyze This!): 1-D, 2-D, and 3-D Categorical Graphics
+
+
+#  Problem 1
+
+(5 points each)
+
+**Chi-Square Tests in R**:  
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+
+# reads Matey's IMDb rated movies TV Series, etc.
+mateys_imdb <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/mateys_imdb_ratings.csv")
+
+# filters only Featured Films
+mateys_movies <- mateys_imdb %>% filter(`Title type` == "Feature Film")
+```
+  
+a. 
+```{r, warning = FALSE, message = FALSE}
+mateys_movies %>% group_by(Directors) %>% summarize(count = n()) %>% 
+  filter(count == max(count))
+```
+
+The filter function let us only pick directors tho has count = 9, which is the max count among directors.
+
+b. 
+
+```{r, warning = FALSE, message = FALSE}
+mateys_movies <- mutate(mateys_movies, 
+                    vote_date = as.Date(mateys_movies$created, 
+                                format = "%a %b %d %H:%M:%S %Y"),
+                    day_of_week = weekdays(vote_date),
+                    weekend = ifelse(day_of_week %in% c("Saturday", "Sunday"), 
+                                     "Weekend", "Workday"),
+                    duration = cut(`Runtime (mins)`, c(0, 90, 120, Inf), 
+                                        labels = c("Short", "Medium", "Long")),
+                    ratings = cut(`You rated`, c(0, 4, 7, Inf),
+                                  labels = c("Low", "Med", "High")),
+                    movie_period = cut(Year, c(0, 1980, 2000, 2018),
+                              labels = c("Old", "Recent", "New"))
+)
+```
+
+```{r, warning = FALSE, message = FALSE}
+#  Get counts, proportions, and percentages for duration
+duration_marginal <- mateys_movies %>%
+  group_by(duration) %>%
+  summarize(count = n(), 
+            total = nrow(mateys_movies),
+            proportion = round(count / total, 4),
+            percentage = proportion * 100)
+print(duration_marginal)
+```
+
+Now we examine the marginal distribution for duration of movies. There are 53 short movies, which is 7.19% of all movies rated by Matey; there are 395 medium length movies, which is 53.6% of all movies, which is over half of it; there are 289 long movies, which is 39.2% of all movies.
+
+```{r, warning = FALSE, message = FALSE}
+#  Get counts, proportions, and percentages for movie_period
+movie_period_marginal <- mateys_movies %>%
+  group_by(movie_period) %>%
+  summarize(count = n(), 
+            total = nrow(mateys_movies),
+            proportion = round(count / total, 4),
+            percentage = proportion * 100)
+print(movie_period_marginal)
+```
+
+Now we examine the marginal distribution for the movie_period variable. THere are 26 old movies, which means 3.53% of all movies matey rated are released before 1980; there are 141 recent movies, which means 19.1% of all moveis Matey rated are released between 1980 and 2000; there are 570 new movies, which means 77.3% of all movies Matey rated are released from 2000 to 2018. Majority of movies that Matey rated are the new ones.  
+  
+c.  
+
+```{r, fig.height = 5, fig.width = 10, warning = FALSE, message = FALSE}
+library(gridExtra)
+library(ggplot2)
+duration_plot <- ggplot(duration_marginal, aes(x = duration, y = percentage)) + 
+  geom_bar(stat = "identity")+
+  labs(title = "Percentage of Movies for Each Duration")
+movie_period_plot <- ggplot(movie_period_marginal, aes(x = movie_period, y = percentage)) +
+  geom_bar(stat = "identity")+
+  labs(title = "Percentage of Movies for Each Releasing Time Period")
+
+grid.arrange(duration_plot, movie_period_plot, ncol = 2)
+```
+
+d.    
+  
+I don't think the friend is correct. Short, medium, and long movies don't have equal proportions. I'm pretty certain because there is a huge difference between porportion of short movies and porportion of medium movies, as shown from bar chart in part c.
+
+e.   
+
+```{r, warning = FALSE, message = FALSE}
+chisq.test(duration_marginal$count)
+```
+
++  The `chisq.test` function outputs the X-squared, the degree of freedom, and the p-value 
++  The p-value for this test is less than 2.2e-16 
++  Since p is less than 0.05, we reject the null hypothesis, which means that movie with different durations doesn't have the same porportion.
+
+f.   
+
+```{r, warning = FALSE, message = FALSE}
+chisq.test(duration_marginal$count, p = c(0.075, 0.525, 0.40))
+```
+
++  The friend's revised guess is correct, this is because p-value = 0.82 > 0.05, so we fail to reject the null. Which means that they are the same as the proposed proportions.
++  The evidence is the marginal analysis for all data in Matey-rated-movies. Porportions for short, medium, and long movies is 0.0719, 0.536, and 0.392, which is close enough to their proposed values.
+
+g.  BONUS
+
+This is because chi-square test measures how well the observed distribution of data fits with the distribution that is expected. Each oberved value and expected value should be represented by individual count.
+
+***
+***
+
+
+#  Problem 2
+
+(10 points each)
+
+**2-D Bar Charts and (Empirical) Conditional Distributions**
+
+a.  
+
+```{r}
+ggplot(mateys_movies, aes(x = weekend, fill = ratings)) + geom_bar()+
+  labs(title = "Number of Movies for Each Rating Level, Weekend/Workday",
+       y = "Number of Each ratings",
+       x = "Rated on Weekend Or Workday")
+```
+
+b.  The plot shows that Matey gives high ratings regardless of weekend or workday. It's basically the same for both time of the week.
+
+c.  Create another stacked bar chart, but use the `movie_period` (x-axis) and `ratings` (fill) variables instead.
+
+```{r}
+ggplot(mateys_movies, aes(x = movie_period, fill = ratings)) + geom_bar()+
+  labs(title = "Number of Movies for Each Rating Level, for Each Movie Release Period",
+       y = "Number of Each ratings",
+       x = "Movie Release Periods")
+```
+
+d.  The graph from part c shows number of movies for each rating level, with respect to the movie release period. From the graph we can see that Matey rarely watch very old movies, and he watches a lot new movies. When giving ratings, Matey rarely give low rating to movies, for all these three type of movies. For old and recent movies, medium and high ratings are about the same; whereas for new movies, Matey rated majority of them as medium.
+
+***
+***
+
+
+#  Problem 3
+
+(10 points each)
+
+**3-D and 4-D Categorical Data**
+
+
+a.  
+
+```{r}
+ggplot(mateys_movies, aes(x = movie_period, fill = ratings)) + geom_bar()+
+  labs(title = "Number of Movies for Rating Level, by Release Period, Facet by weekend",
+       y = "Number of Each ratings",
+       x = "Movie Release Periods")+
+  facet_grid(~ weekend)
+```
+
+b.  
+
+```{r}
+ggplot(mateys_movies, aes(x = movie_period, fill = ratings)) + geom_bar()+
+  labs(title = "Movie Rating Level counts, by Release Period, Facet by weekend and duration",
+       y = "Number of Each ratings",
+       x = "Movie Release Periods")+
+  facet_grid(weekend ~ duration)
+```
+
+c.  For the graph from part b, we can clearly see that Matey rates more movies on workdays comparing over the weekends. Aside of this, both weekend and workday charts shows that Matey rarely rate old movies, and has rated a lot of new movies. The rating level that Matey gives the most is medium, regardless of weekend or workday. For the graph from part c, we are faceting on two variables, weekend and duration. This allow us to compare across movies that has different durations. It's interesting to see that Matey gives the most ratings for movies that have medium length, and he almost give equal number of high ratings for medium and long movies. There allow us to see that the way Matey gives out movie ratings (Low, Med, or High) is not affected by whether it's weekend or not.
+
+
+***
+***
