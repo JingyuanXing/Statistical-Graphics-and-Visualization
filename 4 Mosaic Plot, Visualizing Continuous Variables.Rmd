@@ -1,0 +1,416 @@
+---
+title: "36-315 Homework 04, Fall 2019"
+author: "Jingyuan Xing"
+date: "Due Sept 25 (11:00pm ET) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Homework 04:  Mosaic Plots and Continuous Data
+
+***
+***
+
+#  Problem 1
+
+**Critiquing Graphs**:
+
+a.  (1 point)  **Include the graph in your assignment**.  
+
+<div style="width:400px">
+![](https://aws1.discourse-cdn.com/standard17/uploads/plot/original/2X/6/6a0557493708212b20dc62480f3e4bf0f9ad7f6c.png)
+</div>
+
+b.  (5 points)  **Describe the graph**.  
+
+The graph shows number of certain animals in NYC zoo and LA zoo. Variables plotted on the y-axis three type of animals, which we can treat it as a categorical variable "Animal", and on the x-axis is the count for number of such animals in zoos. It is color coded to distinguish which zoo the corresponding animal belongs to. The main result of the graph is to show the readers number of interested animals in each zoo.
+
+c.  (4 points)  **Critique the graph**.
+
+The graph is doing a good job of achieving its goals, we can see the number count very clearly through the bar chart, also the number comparison between each category is very clear. There are no unnecessary amount of ink, the color coding is helpful in terms of assisting readers to distinguish the two zoos. The graph didn't distort the actual data. The strength of this graph is that bar graph is very straight forward and easy to read. Also by using "stacked" bar graph, we are able to compare total number of each kind of animal easily. A weakness is that we are hard to make comparison between the two zoos.
+
+d.  (3 points)  **Critique the caption and/or surrounding text**.  
+
+The text does enhance my understanding of the graphics. The category labelling "monkey", "orangutans", and "giraffes" are helpful, the legend "NYC zoo" and "LA zoo" are helpful as well. I would definitely replace the current title with a more informative title for the graph, also I would label the x and y axis.
+
+
+***
+***
+
+
+#  Problem 2
+
+(5 points)
+
+**Mosaic Plots vs. Stacked Bar Charts**:  
+
+The similar part for the mosaic plots and the stacked bar charts is that they represent the same type of data -- the categorical data. They both shows marginal distribution of some variable, and conditional distribution of other variables given this chosen variable. Yet they also have some key differences. For example, the width of columns in stacked bar charts are all the same, we can'textrac any information from column width in stacked bar charts, whereas in mosaic plot, the width of columns are different, they are corresponding to number of data for each categories. Another difference is that, in stacked bar plot, the x-axis is representing only one categorical variable, and other categorical variables are represened as different color coding on each bar. Whereas in mosaic plots, each column along the x-axis can represent a distinct categorical variable. Which make mosaic plot much more flexiable in terms of representing categorical variables, comparing to stacked bar chart. Thirdly, color coding in stacked bar chart is usually used for representing frequency counts for variables other than the one on the x-axis. Whereas in mosaic plot, color can be used to indicate indicate statistically significant positive and negative deviations from what would be expected under independence.
+
+
+***
+***
+
+
+#  Problem 3
+
+(15 points)
+
+**All of the 2-D Categorical Plots**
+
+a.  (1 point each) 
+
+```{r, warning = F, message = F}
+library(tidyverse)
+library(reshape2)
+
+#  Read in data
+airline_tweets <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/Tweets.csv")
+
+date_time <- colsplit(airline_tweets$tweet_created, " ", c("date", "time", "zone"))
+
+#  Add start_date variable to airline_tweets, and a bunch of other variables
+airline_tweets <- mutate(airline_tweets,
+                    start_date = as.Date(date_time$date, format = "%Y-%m-%d"),
+                    hour_of_day = as.integer(substr(date_time$time, 1, 2)),
+                    am_or_pm = ifelse(hour_of_day < 12, "AM", "PM"),
+                    day_of_week = weekdays(start_date),
+                    weekend = ifelse(day_of_week %in% c("Saturday", "Sunday"), 
+                                     "Weekend", "Weekday"),
+                    tweet_length = ifelse(nchar(text) > 100, "Long", "Short"))
+```
+
++  A side-by-side bar chart
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = airline, fill = airline_sentiment)) +
+    geom_bar(position = "dodge") +
+    labs(title = "Side-by-side bar chart of airline sentiment with respect to airlines",
+         x = "Airlines",
+         y = "Airline Sentiment")
+```
+
++  A stacked bar chart
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = airline, fill = airline_sentiment)) +
+    geom_bar() +
+    labs(title = "Stacked bar chart of airline sentiment with respect to airlines",
+         x = "Airlines",
+         y = "Airline Sentiment")
+```
+
++  A mosaic plot
+```{r, warning = F, message = F}
+library(matrixStats)
+source("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/code/geom_mosaic.R")
+ggplot(airline_tweets, aes(x = airline, y = airline_sentiment)) +
+  geom_mosaic() + mosaic_legend() +
+  labs(title = "Mosaic plot of airline sentiment with respect to airlines",
+       y = "Airline Sentiment",
+       x = "Airlines")
+```
++  A proportional bar chart
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = airline, fill = airline_sentiment)) +
+    geom_bar(position = "fill") +
+    labs(title = "Proportional bar chart of airline sentiment with respect to airlines",
+         x = "Airlines",
+         y = "Airline Sentiment")
+```
+
++  A facetted bar chart
+```{r, warning = F, message = F}
+ggplot(airline_tweets, aes(x = airline)) +
+    geom_bar() +
+    facet_wrap(~ airline_sentiment) +
+    labs(title = "Faceted bar chart of airline sentiment with respect to airlines",
+         x = "Airlines",
+         y = "Airline Sentiment")+
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+**Try to think about and write some of these following the 'layers' paradigm of `ggplot`.**
+
+b.  (2 points)  I would prefer the faceted bar chart over the side-by-side bar chart. Because we can see the comparison between airlines individually for each sentiment category.
+
+c.  (2 points each) 
+
++  The stacked bar graph is the easiest to see the marginal distribution of the first variable. Because it is showing as the total number count for each airlines, we can easily identify the marginal distribution for the airlines simply by looking at the height of each column.
+
++  The proportional plot is the easiest to see the conditional distributions of the second variable given each category of the first variable. Because on the proportional plot, the height of airlines is scaled to the same, we don't get much information about marginal distribution, but we get a lot of information about the conditional distributions. It makes all bars the same height, allows us to identify conditional distribution for each airlines very clearly. 
+
++  Stacked bar graph and facet graph provide the best balance of showing the marginal distribution of airlines, and the conditional distribution of sentiments. This is because on the bar graph, we can easily identify marginal distribution by simply look at the bar heights. And as for conditional distribution, we can see this by looking at color coding on each bar, which is convinent as well. For facet graph, it separated one variable into multiple graphs, which makes it easy to use, because we are able to look at the graph we want one at a time.
+
++  The mosaic plot is the easiest to see the outcome of a statistical test. Because mosaic plots color each box according to the standardized Pearson residuals. Red cells indicate statistically significant negative deviations from what would be expected under independence. Blue cells indicate statistically significant positive deviations from what would be expected under independence. And all white means that there is not enough evidence to reject the null hypothesis. We can identify the statistical test result very easily.
+
+
+***
+***
+
+
+#  Problem 4
+
+**Matey's IMDb Ratings**
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+mateys_imdb <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/mateys_imdb_ratings.csv")
+
+# filters only Featured Films
+mateys_movies <- mateys_imdb %>% filter(`Title type` == "Feature Film")
+
+mateys_movies <- mutate(mateys_movies, 
+                    vote_date = as.Date(mateys_movies$created, 
+                                format = "%a %b %d %H:%M:%S %Y"),
+                    day_of_week = weekdays(vote_date),
+                    weekend = ifelse(day_of_week %in% c("Saturday", "Sunday"), 
+                                     "Weekend", "Workday"),
+                    duration = cut(`Runtime (mins)`, c(0, 90, 120, Inf), 
+                                        labels = c("Short", "Medium", "Long")),
+                    ratings = cut(`You rated`, c(0, 4, 7, Inf),
+                                  labels = c("Low", "Med", "High")),
+                    imdb_ratings = cut(`IMDb Rating`, c(0, 4, 7, Inf),
+                                  labels = c("Low", "Med", "High")),
+                    movie_period = cut(Year, c(0, 1980, 2000, Inf),
+                              labels = c("Old", "Recent", "New"))
+)
+```
+
+a.  (3 points)  Some categorical variables of this data set are: duration, ratings, and movie_period. In the context of data, duration is refering to the length of movies that Matey rated. Categories of duration variable are short, medium, and long. Which corresponds to movies that are 0-90 minutes long, movies that are 90-120 minutes long, and movies that are longer than 120 minutes. The rating variable is refering to kinds of ratings that Matey gives, which include low, med, and high. Low ratings means those which receives less than 4 stars, Med ratings are those which receives 4-6 stars, and High ratings are those which receives above 7 stars. Movie_period refers to the releasing time of the movie, whether it is old, recent, or new. Old refers to movies that are released before 1980, and 1980 to 2000 is categorized as recent, after 2000 is considered as new ones.
+
+b.  (3 points)  I think `Runtime (mins)`, `Year`, ``Num. Votes``, `You rated` variables should be considered as continuous. There are several reasons. Although these numbers doesn't go to infinity, they are numerical, and there are a significant number of them for each corresponding variable. Also, the data for these variables can be ordered, meaning they are not completely un-order-able categories, instead, they can form a nice numerical sequence in order, which also make them continuous. The range for each continuous variable are different. The range for Year ranges from 1954 to 2017, and the range for Runtime and Num.Votes are from Inf to -Inf.
+
+```{r, warning = FALSE, message = FALSE}
+range(mateys_movies$Year)
+range(mateys_movies$Runtime)
+range(mateys_movies$Num.Votes)
+```
+
+c.  (3 points)  
+
+```{r, warning = F, message = F}
+library(matrixStats)
+source("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/code/geom_mosaic.R")
+ggplot(mateys_movies, aes(x = movie_period, y = ratings)) +
+  geom_mosaic() + mosaic_legend() +
+  labs(title = "Mosaic plot of ratings with respect to movie periods",
+       y = "Ratings",
+       x = "Movie release periods")
+
+tab4c <- table(mateys_movies$ratings, mateys_movies$movie_period)
+chisq.test(tab4c)
+```
+
+Based on the visual and chi-square test above, "rating" and "movie_period" is not independent of each other. This is because, from the mosaic plot we can see that there are very red and very blue areas, meaning there present statistically significant positive and negative deviations from what would be expected under independence. Also from the chi-square test, p-value is 6.978e-09, which is much less than 0.05, so we reject the null hypothesis, meaning that these two variables are not independent.
+
+d.  (3 points) 
+
+```{r, warning = F, message = F}
+ggplot(mateys_movies, aes(x = imdb_ratings, fill = ratings)) +
+    geom_bar() +
+    labs(title = "Movie ratings by Imdb rating scores",
+         x = "Imdb ratings",
+         y = "Ratings")
+```
+
+```{r, warning = F, message = F}
+mateys_movies <- mutate(mateys_movies,
+                        ratings_new = cut(`You rated`, c(0, 7, 8, Inf), 
+                                          labels = c("Low", "Med", "High")),
+                        imdb_ratings_new = cut(`IMDb Rating`, c(0, 7, 8, Inf),
+                                               labels = c("Low", "Med", "High")))
+
+ggplot(mateys_movies, aes(x = imdb_ratings_new, fill = ratings_new)) +
+    geom_bar() +
+    labs(title = "Movie ratings by Imdb rating scores",
+         x = "Imdb ratings",
+         y = "Ratings")
+```
+
+Initially, there is no Low category present in the imdb_ratings, because there are no ratings in the `IMDb Rating` that is below 4. As we changed how we define "Low" form 4 to 7, there are now ratings that can be categorized as low, so we have three bars in the new plot instead of two.
+
+***
+***
+
+
+#  Problem 5
+
+(5 points each)
+
+**Introduction to Continuous Data -- Box Plots**
+
+a. 
+
+
+```{r, warning = F, message = F}
+library(datasets)
+data(mtcars)
+ggplot(data = mtcars, aes(x = factor(1), y = wt)) + 
+    geom_boxplot(fill = '#990000') +
+    labs(title = "Boxplot of car weights",
+         x = "cars",
+         y = "weights (1000 lbs)")+
+    theme(axis.text.x = element_blank())
+```
+
+b.  Describe the distribution in context.  Demonstrate that you know what the `wt` variable is, and what your graph is showing.  What are some of the strengths of boxplots?  What are some of the weaknesses of boxplots? The boxplot is showing us the weight distribution for cars, in 1000 lbs. We can see that the car with largest weight is around 5500lbs, and the lightest car is about 1300lbs. The median of car weight is around 3300lbs, which means 50% of cars are above this value, and 50% of cars are below it. The 25th percentile is approximately 2600lbs, which means 25% of cars are lighter than 2600lbs, the 75th percentile is approximately 3600lbs, which means 25% of cars are heavier than 3600lbs. There are three outliers at the heavier end of the graph, which means they are heavier than 1.5IQR of cars in this dataset. The strength of boxplot is that it gives us a very good summarize of the data. At a glance, a box plot allows a graphical display of the distribution of results and provides indications of symmetry within the data, and it also displays outliers clearly. A weakness is that, boxplot doesn't give us exact values, which we may need in some occations.
+
+***
+***
+
+
+
+#  Problem 6
+
+(3 points each)
+
+**Critiquing Boxplots**
+
+a.  Outliers in boxplots are defined as data that are above or below 1.5 inter quartile range. This 1.5 is a kind of arbitrary. Boxplot may be unfiar to summarize very skewed distributions such as exponential distribution。
+
+b. I think one way we can change boxplots to adapt with very skewed dataset, is to create a multi-boxplot group. We can divide the data along the x-axis into 5-10 chunks, and make a boxplot for each chunk. In this way, each boxplot can do a better job by just displaying the distribution of data within each chunk; and together we dan look at the vertical displacement among boxplots.
+
+c.
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = factor(1), y = `IMDb Rating`)) + 
+    geom_boxplot(fill = "light blue", alpha = 0.5) +
+    labs(title = "Boxplot of Imdb ratings",
+         x = "",
+         y = "Imdb rating scores")+
+    theme(axis.text.x = element_blank())
+```
+
+It's interesting to see that the 25th percentile is at around score 7, the 75th percentile is at around score 8, which means 50% of data are gathered between score 7-8. It's also interesting to see that there are more outliers on the lower end than on the upper end. When I add alpha = 0.5, While the box and dots become more transparent, however, some dots didn't become that transparent, which indicates that we may have some over lapping outliers.
+
+d. 
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = duration, y = `IMDb Rating`, fill = duration)) + 
+    geom_boxplot(position = "dodge") + 
+    labs(title = "Side-by-side boxplot for IMDb rating by duration",
+         x = "Movie duration",
+         y = "IMDb Ratings")
+```
+
+It's interesting to observe that IMDb ratings is higher for movies that are longer. If we look at the center 50% of movies for each duration, we can see that the vertical displacement of boxes is Short < Medium < Long. This is even true if we are looking at the 1.5IQR on both sides. Boxplot of longer movies has higher score than boxplot for shorter movies.
+
+e.    
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = movie_period, y = `IMDb Rating`, fill = movie_period)) + 
+    geom_boxplot(position = "dodge") + 
+    labs(title = "Side-by-side boxplot for IMDb rating by movie time period",
+         x = "Movie release period",
+         y = "IMDb Ratings")
+```
+
+It's interesting to see that the this boxplot is almost the exact opposite of the previous one. This boxplot shows that the score is the highest in general for old movies, medium for recent movies, and is in general the lowest for the new movies. I'm making this statement because on the graph, the vertical displacement between boxplots is very clear. We can see very clearly that the medium value, the 25th percentile, and the 75th percentile of IMDb ratings are all following this trend: Old > Recent > New.
+
+***
+***
+
+
+#  Problem 7
+
+(4 points each)
+
+**Histograms**
+
+a.  
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = `IMDb Rating`)) + 
+    geom_histogram(bins = 20) + 
+    labs(title = "Histogram of IMDb Ratings",
+         x = "IMDb Ratings",
+         y = "Counts")
+```
+
+b. 
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = Year)) + 
+    geom_bar() + 
+    labs(title = "Bar chart of Movie Years",
+         x = "Movie Years",
+         y = "Counts")
+```
+
+c. 
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = Year)) + 
+    geom_histogram(binwidth = 1) + 
+    labs(title = "Histogram of Movie Years",
+         x = "Movie Years",
+         y = "Counts")
+```
+
+When comparing histogram from part c with bar chart from part b, we can see the most significant difference is that the bars are separated for part b, whereas in part c they are sticked together. The frequency counts and range of years stays the same. Also note that, since we have specified binwidth = 1 in histogram, we know that each bar is showing number of movies in one year. Since the bar graph from part b has same frequency count as the histogram from part c, as a result, we know that the bar graph is making bars for each individual year.
+
+d. 
+
+```{r, warning = F, message = F}
+ggplot(data = mateys_movies, aes(x = Year)) + 
+    geom_histogram(binwidth = 10) + 
+    labs(title = "Histogram of Movie Years by decade",
+         x = "Movie Years",
+         y = "Counts")
+```
+
+I have set the binwidth to 10, which shows me the number of movies for each decade. The marginal distribution of Year has an increasing trend from 1950s to 2010s. Which means Matey rated more newer moview than older ones (by newer and older we mean the movie releasing year here). There is a huge drop for the latest decade, part of the reason is that 2017 is the latest year when Matey created this dataset, so the most recent record is up to 2017. The decade that the majority of the movies Matey rated released is 2005-2010.
+
+e. 
+
+```{r, warning = F, message = F}
+ggplot(mateys_movies, aes(x = Year)) +
+    geom_histogram(binwidth = 10) +
+    facet_wrap(ratings ~ .) +
+    labs(title = "Faceted chart of movie years with respect to ratings",
+         x = "Years by Each Ratings",
+         y = "Counts")+
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+To describe conditional distribution of years given ratings, we look at each rating facet separately. For low ratings, there are actually very few movie counts, most of them gathered at the two decades 1995 to 2015. For med ratings, Matey gives very few Med ratings for movies before 1985, and a ton of medium ratings are given in for movies of the decade 2005-2015. For high ratings, most of them are given for movies released from 1995 to 2005, the second many high ratings are given to the decade of 2005-2015. If we compare across the variable ratings, we see that Matey generally gives ratings out medium ratings, sometimes give high ratings, and only gives out a very few number of low ratings. We can also infer that Matey's probably likes newer movies more, since those from 1990s to 2010s receives the highest number of high scores.
+
+f. 
+
+```{r, warning = F, message = F}
+ggplot(mateys_movies, aes(x = Year)) +
+    geom_histogram(binwidth = 10) +
+    facet_grid(ratings ~ ., margin = T) +
+    labs(title = "Faceted chart of movie years with respect to ratings",
+         x = "Years by Each Ratings",
+         y = "Counts")+
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+Besides the change in graph arrangements, the newly faceted graph is showing us Years condition on Low, Med, High, and All. Now we have a total graph of the three faceted parts, in another word, the marginal distribution of Year.
+
+g. 
+
+```{r, warning = F, message = F}
+ggplot(mateys_movies, aes(x = Year)) +
+    geom_histogram(binwidth = 10) +
+    facet_grid(ratings ~ ., scale = "free_y") +
+    labs(title = "Faceted chart of movie years with respect to ratings",
+         x = "Years by Each Ratings",
+         y = "Counts")+
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+```
+
+The scale argument controls the scale of axis. For example, when we put scle = "free_y", the three faceted graphs now have distinct scales for y-axis, rather than a consistent scale. We might need this if the number count difference is too large for different graphs. If the difference is huge, and we are still using the same scale, some places where only a few data points are avaliable will become invisible. To make these data visible, we may need to make them display using different scales.
+
+***
+***
+
+
+
+
+
+***
+***
