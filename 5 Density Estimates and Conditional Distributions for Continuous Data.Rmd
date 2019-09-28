@@ -1,0 +1,195 @@
+---
+title: "36-315 Lab 05"
+author: "Jingyuan Xing"
+date: "Due Friday, Sept 27 2019 (6:30pm)"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 05:  Density Estimates and Conditional Distributions for Continuous Data
+
+
+
+#  Problem 1
+
+(5 points each)
+
+**1-D Kernel Density Estimation for Continuous Data**
+
+
+a.  The function density computes kernel density estimates. Its default method does so with the given kernel and bandwidth for univariate observations. x value is the n coordinates of the points where the density is estimated. y value is the estimated density values. These will be non-negative, but can be zero.
+
+b.  **Bandwidths:** The bandwdith is a parameter that we can choose to dictate how smooth or rigid our density estimates are.  The larger the bandwidth, the smoother the density estimate (as we'll see below).  It is common to leave the `bw` unspecified, so that we just use the default bandwidth.  However, this is not always the optimal choice -- you should choose a bandwidth that best displays the features of underlying continuous distribution.  Along these lines, what is the purpose of the `adjust` parameter? Since the bandwidth used is actually adjust*bw, parameter adjust is useful if we want for example, something like ‘half the default’ bandwidth, we just set it to 0.5.
+
+c.  **Kernels:** Read the documentation for the `kernel` parameter.
+Kernels are functions used to smooth the data distribution so that we
+have a continuous curve, rather than some piecewise density estimate
+(as we have in a histogram, for example).  What are the possible
+kernels we can choose within the `density()` function? Some possible options are "gaussian", "rectangular", "triangular", "epanechnikov", "biweight", "cosine" or "optcosine".
+
+
+
+***
+***
+
+
+
+
+#  Problem 2
+
+(5 points each)
+
+**Estimating Continuous Densities**
+
+(For parts (a) -- (f), arrange the graphs into a 2x3 grid.)
+
+```{r, message=F, warning=F}
+library(tidyverse)
+
+food <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/food-facts.csv")
+```
+
+a-f
+
+```{r, message=F, warning=F}
+library(gridExtra)
+
+plot2a <- ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    labs(title = "Density histogram of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+
+plot2b <- ggplot(food, aes(x = energy_100g))+ 
+    geom_density()+
+    labs(title = "Density plot of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+
+plot2c <- ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    geom_density(color = "blue", size = 2)+
+    labs(title = "Density of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+
+plot2d <- ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    geom_density(color = "blue", size = 2)+
+    geom_vline(aes(xintercept = mean(energy_100g)), color = "red", linetype = "dashed", size = 2)+
+    labs(title = "Density of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+
+plot2e <- ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    geom_density(color = "blue", size = 2)+
+    geom_vline(aes(xintercept = mean(energy_100g)), color = "red", linetype = "dashed", size = 2)+
+    geom_vline(aes(xintercept = median(energy_100g)), color = "green", linetype = "dashed", size = 1)+
+    labs(title = "Density of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+
+plot2f <- ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    geom_density(color = "blue", size = 2)+
+    geom_vline(aes(xintercept = mean(energy_100g)), color = "red", linetype = "dashed", size = 2)+
+    geom_vline(aes(xintercept = median(energy_100g)), color = "green", linetype = "dashed", size = 1)+ 
+    geom_rug()+
+    labs(title = "Density of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+grid.arrange(plot2a, plot2b, plot2c, plot2d, plot2e, plot2f, nrow = 2, ncol = 3)
+```
+
+c. Adding color = "blue", size = 2 makes the density plot line colored blue and width doubled.
+
+g.  Compare your graphs in Problem 2 parts (a)-(f).  Which gives you the most information about the distribution of `energy_100g`?  Which graph is the easiest to read?  Which graph do you think is the most effective, overall?  Do any of the graphs contain unnecessary information? The graph f gives me the most information about the distribution of energy_100g. The first two graphs, a and b, are the easiest to reac. Overall I think the second last graph, e, is the most effective, because it has shown us a good amount of information (distribution, mean, median), without loss of simpilicy.
+
+h. 
+
+```{r, message=F, warning=F}
+ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    geom_density(color = "blue", size = 2, adjust = 1/2)+
+    labs(title = "Density of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+```
+
+As we decrease the adjust parameter, the blue density line fits better with the actual distribution; as we increase the adjust parameter, the density line become smoother. 
+
+i. 
+
+```{r, message=F, warning=F}
+ggplot(food, aes(x = energy_100g))+ 
+    geom_histogram(aes(y = ..density..))+
+    geom_density(color = "blue", size = 2, kernel = "gaussian")+
+    labs(title = "Density of energy 100 g",
+         x = "Energy 100g",
+         y = "Density")
+```
+
+The rectangular kernel is not continuous density estimation, so it is less smooth than the gaussian kernel.
+
+***
+***
+
+
+#  Problem 3
+
+(8 points each)
+
+**Histograms and Density Plots for Conditional Distributions**
+
+
+a-d
+
+```{r, message=F, warning=F}
+
+plot3a <- ggplot(data = food, aes(x = energy_100g, fill = nutrition_grade_fr)) + 
+    geom_histogram()+
+    labs(title = "conditional distribution of energy_100g on nutrition_grade_fr")
+
+plot3b <- ggplot(data = food, aes(x = energy_100g, fill = nutrition_grade_fr)) +
+    geom_histogram(alpha = 0.6, position = "identity")+
+    labs(title = "conditional distribution of energy_100g on nutrition_grade_fr")
+
+plot3c <- ggplot(data = food, aes(x = energy_100g, fill = nutrition_grade_fr)) +
+    geom_density(alpha = 0.5)+
+    labs(title = "conditional distribution of energy_100g on nutrition_grade_fr")
+
+plot3d <- ggplot(data = food, aes(x = energy_100g, color = nutrition_grade_fr)) +
+    geom_density(size = 1.5)+
+    labs(title = "conditional distribution of energy_100g on nutrition_grade_fr")
+
+grid.arrange(plot3a, plot3b, plot3c, plot3d, nrow = 2, ncol = 2)
+```
+
+b. The alpha parameter controls the transparency of the graph. Adjusting alpha makes us better see some of the variables that are laying behind.
+
+c.  Repeat part (b), but use a density plot instead.
+
+d.  Repeat part (c), but this time, use `+ aes(x = energy_100g, color = nutrition_grade_fr) + geom_density(size = 1.5)`.  What changed? The density lines becomes thicker by setting size = 1.5. The graph becomes not transparent because alpha is set back to default 1.
+
+e.  Compare your graphs in Problem 3. Graph in part b gives me the most information about conditional distributions of energy_100g given nutrition_grade_fr, because the bars in histogram directly shows the exact distribution of energy_100g. Graph in part c is the easiest to read because the density graph has given us an outline of the distribution of energy_100g. Overall, I think graph in part c is the most effective.
+
+f.  (BONUS:  5 points)  Make a "proportional density plot" with the two variables from this problem.
+
+```{r, message=F, warning=F}
+ggplot(data = food, aes(x = energy_100g, fill = nutrition_grade_fr)) +
+    geom_density(position = "fill")+
+    labs(title = "proportion density of energy_100g on nutrition_grade_fr")
+```
+
+***
+***
+
+
+
+
+
