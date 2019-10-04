@@ -1,0 +1,335 @@
+---
+title: "36-315 Lab 06"
+author: "Jingyuan Xing"
+date: "Due Friday, Oct 4, 2019 (6:30pm)"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 06:  Trends, Transformations, and Correlations in 2-D Continuous Data
+
+
+#  Problem 1
+
+**Loading The Data**
+
+Download the 
+Lab06UsefulCode from Canvas.  Use the example code in this file to help you with this assignment.
+
+a.  (5 points)  Load the Food Facts dataset from a previous assignment (Lab05), and store this in an object called `food`.  Which variables are continuous?  What is the lower bound (if any) on the possible values of these continuous variables?  What is the upper bound (if any) on these continuous variables? **Think critically - are there natural/structural bounds as well as observed bounds?**
+
+```{r, message=F, warning=F}
+library(tidyverse)
+
+food <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/food-facts.csv")
+print(food)
+range(food$quantity)
+range(food$energy_100g)
+range(food$fat_100g)
+range(food$saturated_fat_100g)
+range(food$carbohydrates_100g)
+range(food$sugars_100g)
+range(food$fiber_100g)
+range(food$proteins_100g)
+range(food$salt_100g)
+range(food$sodium_100g)
+```
+
+Continuous variables of the food dataset include: quantity, energy_100g, fat_100g, saturated_fat_100g, carbohydrates_100g, sugars_100g, fiber_100g, proteins_100g, salt_100g, and sodium_100g. The natural lower bound for all of these variables should be zero, since these values cannot be negative. For this particular dataset, observed the lower bound and upper bound for each continuous variable is: energy_100g (0, 4134), fat_100g (0, 100), saturated_fat_100g (0.0, 85.7), carbohydrates_100g (0, 100), sugars_100g (0, 100), fiber_100g (0, 43), proteins_100g (0, 56), salt_100g (0.00, 62.23), and sodium_100g (0.0, 24.5), the bounds for quantity is NA because their unit is not standardlized.
+
+b.  (5 points)  Use your theme for all graphs in this assignment! (Please put your theme here.)
+
+```{r, warning = FALSE, message = FALSE}
+jingyuax_315_theme <-  theme_bw() + # White background, black and white theme
+  theme(panel.background = element_rect(fill = "white",
+                                colour = "lightgray",
+                                size = 0.5, linetype = "solid"),
+        text = element_text(size = 12, family = "Arial", face = "bold", color = "black"))
+```
+
+***
+***
+
+
+#  Problem 2
+
+**Transformations**
+
+a.  (5 points)  Create two graphs, arranged into a 1x2 grid:
+
++  A histogram of the `proteins_100g` variable conditioned on the presence of absence of additives
++  A density estimate of the `proteins_100g` variable conditioned on the presence of absence of additives
+
+Is the distribution of `proteins_100g` skewed left or skewed right?  Does this change depending on the presence or absence of additives?
+
+```{r, warning = FALSE, message = FALSE}
+library(gridExtra)
+plot2a1 <- ggplot(food, aes(x = proteins_100g, fill = additives_n))+
+    geom_histogram()+
+    jingyuax_315_theme+
+    labs(title = "Proteins_100g by additives",
+         fill = "Additives or not")
+    
+plot2a2 <- ggplot(food, aes(x = proteins_100g, fill = additives_n))+
+    geom_density()+
+    jingyuax_315_theme+
+    labs(title = "Proteins_100g by additives",
+         fill = "Additives or not")
+    
+grid.arrange(plot2a1, plot2a2, ncol = 2)
+```
+
+The distribution of proteins_100g skewed to the right, the tail is extending towards the right hand side. The skewness is the same with or without presence of aditives.
+
+b.  (10 points)  Often, with skewed data, it can be helpful to transform the data so that we can better visualize the distribution of possible values.  This often also helps when we use statistical models for continuous variables (e.g. linear regression).  Create four graphs, arranged into a 2x2 grid:
+
++  A histogram of the `proteins_100g` variable conditioned on the presence of absence of additives **at the log scale**
++  A density estimate of the `proteins_100g` variable conditioned on the presence of absence of additives **at the log scale**
++  A histogram of the `proteins_100g` variable conditioned on the presence of absence of additives **at the square root scale**
++  A density estimate of the `proteins_100g` variable conditioned on the presence of absence of additives **at the square root scale**
+
+```{r, warning = FALSE, message = FALSE}
+plot2b1 <- ggplot(food, aes(x = log(proteins_100g), fill = additives_n))+
+    geom_histogram()+
+    jingyuax_315_theme+
+    labs(title = "Log Proteins_100g by additives",
+         fill = "Additives or not",
+         x = "Log of proteins_100g")
+    
+plot2b2 <- ggplot(food, aes(x = log(proteins_100g), fill = additives_n))+
+    geom_density()+
+    jingyuax_315_theme+
+    labs(title = "Log Proteins_100g by additives",
+         fill = "Additives or not",
+         x = "Log of proteins_100g")
+
+plot2b3 <- ggplot(food, aes(x = sqrt(proteins_100g), fill = additives_n))+
+    geom_histogram()+
+    jingyuax_315_theme+
+    labs(title = "Sqrt Proteins_100g by additives",
+         fill = "Additives or not",
+         x = "Square root of proteins_100g")
+    
+plot2b4 <- ggplot(food, aes(x = sqrt(proteins_100g), fill = additives_n))+
+    geom_density()+
+    jingyuax_315_theme+
+    labs(title = "Sqrt Proteins_100g by additives",
+         fill = "Additives or not",
+         x = "Square root of proteins_100g")
+    
+grid.arrange(plot2b1, plot2b2, plot2b3, plot2b4, nrow = 2, ncol = 2)
+```
+
+c.  (1 point)  How many food items in the dataset have 0 grams of protein (per 100g of the food)?
+
+```{r, warning = FALSE, message = FALSE}
+sum(food$proteins_100g == 0)
+```
+
+There are 136 food items in the dataset with proteins_100g as 0.
+
+d.  (1 point)  What is the square root of 0 (i.e. $\sqrt(0)$)?
+
+```{r, warning = FALSE, message = FALSE}
+print(sqrt(0))
+```
+
+Square root of 0 is 0.
+
+e.  (1 point)  What is the log of 0 (i.e. $log_e(0)$)?
+
+```{r, warning = FALSE, message = FALSE}
+print(log(0))
+```
+
+Log of 0 is negative infinity.
+
+f.  (2 points)  What does `ggplot()` do when you ask it to plot `NA`, `Inf`, or `-Inf` values?
+
+NA, infinity, and negative infinity can't be plotted.
+
+g.  (5 points)  To get around this issue, recreate the log-scale histogram in part (b), but this time, use something like `aes(x = log(proteins_100g + epsilon))`.  Try this for different values of `epsilon`, e.g. `epsilon = 1` and `epsilon = 0.01`.  How much does this change the resulting plots?
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = log(proteins_100g + 1), fill = additives_n))+
+    geom_histogram()+
+    jingyuax_315_theme+
+    labs(title = "Log Proteins_100g by additives",
+         fill = "Additives or not",
+         x = "Log of proteins_100g")
+
+ggplot(food, aes(x = log(proteins_100g + 0.01), fill = additives_n))+
+    geom_histogram()+
+    jingyuax_315_theme+
+    labs(title = "Log Proteins_100g by additives",
+         fill = "Additives or not",
+         x = "Log of proteins_100g")
+
+```
+
+The result is a lot different. The plot with epsilon = 1 inside log transformation result in a graph with completely non-negative x-axis, and all the data points got clearly displayed. Whereas for the plot with epsilon = 0.01 inside log tranformation, there are a lot more negative values on the x-axis.
+
+***
+***
+
+
+#  Problem 3
+
+(5 points each)
+
+**Visualizing 2-D Continuous Data with Scatterplots**
+
+a.  Create a scatterplot with `fat_100g` as the independent variable (on the x-axis) and `energy_100g` as the dependent variable (on the y-axis).
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point() + 
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+b.  Describe the joint distribution of these two variables.  What interesting features do you see?  Do the two variables appear to be associated or correlated with each other?  Is there any group structure in the data?
+
+Since joint probability distribution is a measure that calculates the likelihood of two events occurring together and at the same point in time, we can see from the scatterplot above that there is a relative strong positive relationship between energy per 100g food and fat per 100g food. They do appear to be associated with each other. There are some interesting features that, we can see some group clustering in the data. One the x-axis, for fat per 0 - 50g food, there appear to be two groups, one with higher energy and the other with lowe energy.
+
+c.  Repeat part (a), but color the points by the food group (`pnns_groups_1`)  Are there particular areas of the graph where foods with certain good groups are common or uncommon?  Interpret your findings in the context of the problem.
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point(aes(color = pnns_groups_1)) + 
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+Coloring the points by penns_groups_1 provides us a much better sense about what each part of the data is. There certainly are particular areas of the graph where foods with certain good groups are more common than others. For example, at the same fat per 100g food, cereals and potatoes, salty snacks, and sugary snacks has much more energy than milk and dairy products, and fish meat eggs. Also note that fat and sauces is the type of food which has the largest range of fat per 100g food.
+
+d.  Repeat part (c), but this time, facet on the food group instead of coloring the points.  In your opinion, is it easier to answer the questions asked in (c) with facetting or with the colors?  Do you think this is true generally, or does it depend on the problem?
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point() + 
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")+
+    facet_grid(pnns_groups_1 ~ .)
+```
+
+I think it's easier to answer question in part (c) use coloring. But this really depends on different problems and different need.
+
+e.  Repeat part (c), but this time, change the point type to correspond to the presence or absence of additives.  With so many data points, is it easy to tell if foods with or without additives occur in certain portions of the graph?
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point(aes(color = additives_n)) + 
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+Yes, it is easy to tell if foods with or without additives occur in certain portions of the graph, since they are colored using two distinct colors. 
+
+f.  Repeat part (e), but this time, change either the size of the point or the shade/transparency of the point (`alpha`) to correspond to another continuous variable in the dataset.  Does the continuous variable you chose appear to be associated with either of the other variables you're plotting here?
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point(aes(color = additives_n, alpha = sugars_100g)) + 
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+The continuous variable I chose is sugars per 100g food. And I used it for the alpha (transparency). sugars_100g does appear to be associated with energy_100g, because we can see that for the same fat_100g, the points are less transparent for higher energy, and more transparent for lower energy.
+
+g.  Repeat part (a), but this time, add a linear regression line to the plot, with no error bars.  Does the line appear to provide a good fit to the variables being plotted here?  Why or why not?
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point() + 
+  geom_smooth(method = lm, se = FALSE)+
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+It's not exactly a good fit, because there are two groups above and below the regression line (with different energy levels), the line didn't accurately show either of these two groups. Yet, the line is okay in the sense that it does show the positive trend between the two variables energy_100g and fat_100g.
+
+h.  Repeat part (g), but this time, add a non-linear regression line to the plot instead of a linear regression line, again with no error bars.  Does the non-linear regression model appear to provide a better or worse fit than the linear model in part (g)?  Why?  Are there any particular areas of the graph where the line does not closely match the underlying data?  If so, where?
+
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point() + 
+  geom_smooth(method = loess, se = FALSE)+
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+Yes, the non-linear regression model appear to provide a better or worse fit than the linear model in part (g), because it better shows the clustering of data at lower part of fat_100g. And Yes,  there are some areas of the graph where the line does not closely match the underlying data. from fat_100g 10 to 50g, there are a lot of data that appears to be forming a straight line, but this curve is misrepresenting this part of the data.
+
+i.  Repeat part (h), but this time, color the points by their food group.  Be sure to have only a single non-linear regression line in the plot.  To do this, you'll need to specify the `x` and `y` aesthetics in the initial call to `aes()` in `ggplot()`, and the `color` aesthetic in the call to `geom_point()`.  For example, the following code should get you started:  `ggplot(food, aes(x = fat_100g, y = energy_100g)) + geom_point(aes(color = pnns_groups_1)) + geom_smooth()`.
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g)) + 
+  geom_point(aes(color = pnns_groups_1)) + 
+  geom_smooth(method = loess, se = FALSE)+
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+j.  Repeat part (h), but this time, add several non-linear regression lines to the plot -- one for each of the food groups.  To do this, just move the specification of the `color` aesthetic from `geom_point()` to the original call to `aes()` in `ggplot()`.  For example, the following code should get you started:  `ggplot(food, aes(x = fat_100g, y = energy_100g, color = pnns_groups_1)) + geom_point() + geom_smooth(se = FALSE)`.
+
+```{r, warning = FALSE, message = FALSE}
+ggplot(food, aes(x = fat_100g, y = energy_100g, color = pnns_groups_1)) + 
+  geom_point() + 
+  geom_smooth(method = loess, se = FALSE)+
+    labs(title = "Scatterplot of energy per 100g vs fat per 100g",
+         x = "Fat per 100g food",
+         y = "Energy per 100g food")
+```
+
+k.  Explain why you get different plots in parts (i) and (j) even though the code you use is very similar.  Why does one produce a plot with a single trend line, and the other a plot with several trend lines?
+
+The plot in part i is attempting to make one non-linear regression line for the entire dataset, because color = pnns_groups_1 is added after calling the entire ggplot(). Whereas the plot in part j is attempting to fit non-linear regression lines for each food group, because we put color = pnns_groups_1 while we call ggolot(), so it made one line for each color of the dataset.
+
+***
+***
+
+#  Problem 4
+
+(5 points each)
+
+**Correlations**
+
+a.  Look up the help documentation on the `cor()` function.  What is the correlation of the `fat_100g` and `energy_100g` variables?
+
+```{r, warning = FALSE, message = FALSE}
+cor(food$energy_100g, food$fat_100g)
+```
+
+The correlation of the two variables is 0.798035.
+
+b.  Uncomment the following code, and answer the following questions:
+
++  What does the following code do?  
++  Which pair of two unique variables has the strongest positive correlation?  
++  Which pair of variables below has the strongest negative correlation? 
+
+
+```{r}
+food %>% 
+  select(fat_100g, energy_100g, sugars_100g, proteins_100g) %>%
+  cor
+````
+
+The code computes correlation between each corresponding variables. energy_100g and fat_100g has the strongest positive, sugars_100g and proteins_100g is strongest negative
+
+***
+***
