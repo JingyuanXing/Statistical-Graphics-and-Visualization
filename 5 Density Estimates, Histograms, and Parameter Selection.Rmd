@@ -1,0 +1,480 @@
+---
+title: "36-315 Homework 05, Spring 2019"
+author: "Your Name Here"
+date: "Due Wednesday, October 2, 2019 (11:00pm ET) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+##  Homework 05:  Density Estimates, Histograms, and Parameter Selection
+
+
+***
+***
+
+#  Problem 0
+
+**Style Guide and Tabbed HTML Output**
+
+a.  Google's style guide
+
+
+***
+***
+
+
+#  Problem 1
+
+(5 points)
+
+**Theme and Build your #brand**
+
+a. (2 points) Read the documentation on `ggplot` themes [here](http://ggplot2.tidyverse.org/reference/theme.html).
+
+Using the graphic below, update it with a new theme.
+
+```{r warning = FALSE, message = FALSE}
+library(tidyverse)
+ggplot(iris,aes(x = Petal.Length, y = Petal.Width, color = Species)) +
+  geom_point() +
+  labs(
+    x = "Petal Length",
+    y = "Petal Width",
+    title = "Petal Measurements of Genetically Diverse Iris Populations",
+    caption = "Your Basic `Iris` Data")+
+  theme(panel.background = element_rect(fill = "white",
+                                colour = "white",
+                                size = 0.5, linetype = "solid"),
+        text = element_text(size=10, family="Comic Sans MS", color = "purple"))
+```
+
+b. (3 points) Create a new `ggplot()` theme.
+
+```{r, warning = FALSE, message = FALSE}
+jingyuax_315_theme <-  theme_bw() + # White background, black and white theme
+  theme(panel.background = element_rect(fill = "white",
+                                colour = "lightgray",
+                                size = 0.5, linetype = "solid"),
+        text = element_text(size = 12, family = "Arial", face = "bold", color = "black"))
+```
+
+***
+***
+
+
+#  Problem 3
+
+(20 points)
+
+##  Load the Red Wines Dataset
+
+**Load the Red Wines Dataset into R.**  This is a dataset provided [here](https://www.kaggle.com/piyushgoyal443/red-wine-dataset/data) by Kaggle.  Documentation for all of the variables is available at that link as well. The Wines Facts data is available on the Course GitHub page [here](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/wineQualityInfo.txt).
+
+```{r, warning = FALSE, message = FALSE}
+wine <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/wineQualityReds.csv")
+wine <- wine %>% mutate(quality = factor(quality))
+
+# my_colors <- c("darkred", "pink", "lightgrey", "lightblue",  "darkblue",  "black")
+```
+
+***
+***
+
+## Actual Problem 
+
+**Density Estimates vs. Histograms**
+
+In this problem, we'll examine the distribution of `citric.acid` with density estimates, histograms, and rug plots.
+
+a.  (1 point)  Look at the help documentation for the `citric.acid` variable on Kaggle.  What is this variable?  What are the units? The variable citric acid is found in small quantities, citric acid can add 'freshness' and flavor to wines. The unit for it is g / dm^3.
+
+b.  (4 points)  Create two density plots of the `citric.acid` variable.  In the first, use a small bandwidth, so that many local features of the distribution are shown, and the density estimate is somewhat "jagged" / "rigid" / not smooth.  In the second, use a larger bandwidth, so that the local features of the distribution are smoothed out.  Use `grid.arrange()` to arrange these plots into a 2x1 grid.  Compare and contrast the two plots.  Discuss which features are easier or more difficult to see in each of the plots.
+
+```{r, warning = FALSE, message = FALSE}
+library(ggplot2)
+library(gridExtra)
+plot3b1 <- ggplot(wine, aes(x = citric.acid))+
+  geom_density(adjust = 0.5)+
+  labs(title = "Density plot of citric acid",
+       x = "Citric Acid (g / dm^3)")+
+  jingyuax_315_theme
+
+plot3b2 <- ggplot(wine, aes(x = citric.acid))+
+  geom_density(adjust = 2)+
+  labs(title = "Density plot of citric acid",
+       x = "Citric Acid (g / dm^3)")+
+  jingyuax_315_theme
+
+grid.arrange(plot3b1, plot3b2, nrow = 2)
+```
+
+The second graph is much more smooth than the first graph, yet the first graph shows us more information about density variation in the data much better.
+
+c.  (4 points)  Create two histograms of the `citric.acid` variable.  In the first, use a small bin width (or a large number of bins), so that many local features of the distribution are shown, and the histogram is somewhat "jagged" / "rigid" / not smooth.  In the second, use a larger bin width (or a small number of bins), so that the local features of the distribution are smoothed out.  Use `grid.arrange()` to arrange these plots into a 2x1 grid.  Compare and contrast the two plots.  Discuss which features are easier or more difficult to see in each of the plots.
+
+```{r, warning = FALSE, message = FALSE}
+plot3c1 <- ggplot(wine, aes(x = citric.acid))+
+  geom_histogram(binwidth = 0.01)+
+  labs(title = "Histogram of citric acid",
+       x = "Citric Acid (g / dm^3)")+
+  jingyuax_315_theme
+  
+plot3c2 <- ggplot(wine, aes(x = citric.acid))+
+  geom_histogram(binwidth = 0.08)+
+  labs(title = "Histogram of citric acid",
+       x = "Citric Acid (g / dm^3)")+
+  jingyuax_315_theme
+
+grid.arrange(plot3c1, plot3c2, nrow = 2)
+```
+
+The first graph with small binwidth provides very detailed information on frequency count for citric acid. It's very clear for the readers to identify the three modes take place in the graph. Whereas the second graph provides us a more general view about thie data. The second graph makes it easier for us to see the trend of the data.
+
+d.  (6 points)  Does the distribution of `citric.acid` differ depending on the quality (`quality`) of the wine?  Answer this graphically in three ways:  First, with a "stacked histogram" (fill the bars according to the wine quality).  Second, with a "conditional density plot" (have six density curves -- one for each wine quality grade -- on a single plot, with each curve colored according to the wine quality).  Third, by creating facetted histograms of `citric.acid`, facetting on `quality`.
+
+```{r, warning = F, message = F}
+ggplot(wine, aes(x = citric.acid, fill = quality))+
+  geom_histogram(position = "stack")+
+  labs(title = "Stacked histogram for citric acid on quality",
+       x = "Citric Acid (g / dm^3)")+
+  jingyuax_315_theme
+
+ggplot(wine, aes(x = citric.acid, fill = quality))+
+  geom_density(alpha = 0.5)+
+  labs(title = "Conditional density plot for citric acid on quality",
+        x = "Citric Acid (g / dm^3)")+ 
+  jingyuax_315_theme
+
+ggplot(wine, aes(x = citric.acid, fill = factor(wine$quality)))+
+  geom_histogram()+
+  facet_wrap(~ wine$quality)+ 
+  labs(title = "Faceted histogram for citric acid on quality",
+        x = "Citric Acid (g / dm^3)")+
+  jingyuax_315_theme
+  
+```
+
+
+e.  (2 points)  In part (d), does it make more sense to display the facetted histograms in a 1x6 (one row, six columns) grid or a 6x1 (six rows, one column) grid?  What are the advantages and disadvantages of each approach?  Which features of the histograms are easier or more difficult to compare depending on what you chose? 
+  
+It make more sense to display the facetted histogram in a 1 row, 6 columns grid, because the values on the x-axis for citric acid is pretty small, and the count needs much more space in order to get properly displayed. the 1 row 6 cols approach allows us to see the frequency count more clearly, and the 6 rows 1 col approach allows us to see how the change in citric acid level affect the count change more clearly.
+
+
+f.  (3 points)  Recreate the first plot from part (d), but use your own color gradient.
+
+```{r, warning = F, message = F}
+color1 <- "palevioletred2"
+color2 <- "skyblue2"
+palette <- c(color1, "white", color2)
+n_values <- length(unique(wine$quality))
+
+ggplot(wine, aes(x = citric.acid, fill = quality))+
+  geom_histogram(position = "stack")+
+  labs(title = "Stacked histogram for citric acid on quality",
+        x = "Citric Acid (g / dm^3)")+
+  scale_fill_manual(name = "Wine Quality",
+                  values = colorRampPalette(palette)(n_values))
+```
+
+
+***
+***
+
+
+
+#  Problem 4
+
+(25 points)
+
+a.  (2 points)  What information is contained in the `sulphates` variable? a wine additive which can contribute to sulfur dioxide gas (S02) levels, wich acts as an antimicrobial and antioxidant
+
+b.  (3 points)  Is the quality of the wine associated with the amount of sulphates?  To answer this, visualize the distribution of `quality` given the `sulphates` variable with a stacked histogram.  Describe the distribution.  Be sure to mention center, spread, skew, and modality.
+
+```{r, warning = F, message = F}
+ggplot(wine, aes(x = sulphates, fill = quality))+
+  geom_histogram(position = "stack")+
+  labs(title = "Stacked histogram for sulphate by quality",
+       x = "Sulphate (g / dm3)")+
+  jingyuax_315_theme
+
+mean(wine$sulphates)
+median(wine$sulphates)
+sd(wine$sulphates)
+range(wine$sulphates)
+```
+
+Looks like there is a weak association between the quality of wine and the amount of sulphates. Because we can see that the highest quality wine, with quality 7 and 8, is mostly in between 0.6 and 0.9. The mean is 0.6581488, the median is 0.62. The spread for the data is from 0.33 to 2.00. The standard deviation is 0.169507. The data is skewed to the right and the modality is unimodal.
+
+c.  (5 points)  Visualize the log-transformed `sulphates` variable (in `R`, the `log()` function gives the natural log by default).  To do this, use `ggplot(wine) + geom_histogram(aes(x = log(sulphates),...))`, and be sure to add appropriate titles and axis labels (in particular, what are the units on the x-axis?) and use a larger-than-default number of bins.  Is it the answer to question in (b) with this graph more apparent?  Do higher-quality wines tend to have higher sulphates overall?
+
+```{r, warning = F, message = F}
+ggplot(wine, aes(x = log(sulphates), fill = quality))+
+  geom_histogram(position = "stack", aes(x = log(sulphates)), bins = 50)+
+  labs(title = "Stacked histogram for log sulphate on quality",
+       x = "Sulphate (g / dm3)")+
+  jingyuax_315_theme
+```
+
+The answer is more apparent using this graph. And from the graph we see that higher-quality wines do tend to have higher sulphates overall.
+
+d.  (5 points)  Repeat part (c), but with a conditional density estimate plot instead of a stacked histogram.  Use the `adjust` parameter to reduce the bandwidth to 75% of the default value. **Make sure you graphic does the best it can to actually help the viewer answer the question.**
+
+```{r, warning = F, message = F}
+ggplot(wine, aes(x = log(sulphates), fill = quality))+
+  geom_density(adjust = 0.75, aes(x = log(sulphates)))+
+  labs(title = "Conditional density estimate for log sulphate on quality",
+       x = "Sulphate (g / dm3)")+
+  jingyuax_315_theme
+```
+
+e.  (10 points)  Examine the plots from the following lines of code.  Why does the rug plot show up in some plots, but not in others?  Why do the middle-column plots look different from the others?  Which line of code is most efficient and appropriate to use, given how `ggplot()` uses the `aes()` function?
+
+```{r, fig.width = 12, fig.height = 8, warning = FALSE, message = FALSE}
+library(gridExtra)
+plot1 <- ggplot(wine) + geom_histogram(aes(x = log(sulphates))) + geom_rug()
+plot2 <- ggplot(wine) + geom_histogram(aes(x = log(sulphates))) + geom_rug(aes(x = sulphates))
+plot3 <- ggplot(wine) + geom_histogram(aes(x = log(sulphates))) + geom_rug(aes(x = log(sulphates)))
+plot4 <- ggplot(wine, aes(x = log(sulphates))) + geom_histogram() + geom_rug()
+plot5 <- ggplot(wine, aes(x = log(sulphates))) + geom_histogram() + geom_rug(aes(x = sulphates))
+plot6 <- ggplot(wine, aes(x = log(sulphates))) + geom_histogram() + geom_rug(aes(x = log(sulphates)))
+
+grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, ncol = 3)
+```
+
+The rug plot show up in some plots, but not in others, because x needs to be specified for rug plot. It did not show up in graph 1, because x is not specified in geom_rug(), and there is no x for it to look to in the main ggplot() either.  
+The middle-column plots look different from the others, because x is different for geom_rug() and histogram.  
+The no.4 line of code is most efficient and appropriate to use.
+
+f.  (BONUS:  1 point)  `ggplot()` has many scaling functions built in.  What can you add to the following line of code (where it currently says `+ ???` to put the x-axis on the square-root scale?  What about the log-base-10 scale?
+
+`ggplot(wine, aes(x = sulphates)) + geom_histogram() + geom_rug() + ???`
+
+```{r, warning = F, message = F}
+ggplot(wine, aes(x = sulphates)) + geom_histogram() + geom_rug()+ scale_x_continuous(trans='sqrt')
+
+ggplot(wine, aes(x = sulphates)) + geom_histogram() + geom_rug()+ scale_x_continuous(trans='log10')
+```
+
+
+(BONUS: 1 point) Same question as above, but this time show an $atanh$ transformation of the x-axis.
+
+```{r, warning = F, message = F}
+ggplot(wine, aes(x = sulphates)) + geom_histogram() + geom_rug() + scale_x_continuous(trans='atanh')
+```
+
+***
+***
+
+#  Problem 5
+
+(20 points)
+
+**Automatically Specify Bin Width**
+
+Write a function called `auto_binwidth()` that automates the choice of a bin width for a 1-D histogram.  Your function should work as follows:
+
+```{r, message=F, warning=F}
+auto_binwidth <- function(x, adjust = 1) {
+  binwidth <- (median(x)/mean(x))/log(length(x)) * sd(x)
+  return(adjust * binwidth)
+}
+```
+
+That is, it should select the bin width automatically given, as input, the variable you are plotting on the x-axis.
+
+Your function should take into account some combination of the following features:
+
++  The minimum and maximum (or the range/spread) of the variable
++  The variance (or standard deviation) of the variable
++  The skewness of the variable
++  The number of observations / sample size
++  Other important statistics (e.g. mean, median, quantiles, etc)
++  Anything else you think may help
+
+The function should output a single number, specifying the bin width to be used in the histogram (adjusted with an adjustment factor specified by the user).
+
+You may NOT use or look up existing functions/formulas for automatically specifying the bin width or number of bins in a histogram.  The purpose of this problem is to get you to think about what's important when choosing this parameter.  Blindly copying down a formula from the internet does not achieve this goal.
+
+Other than that, how you define your function is up to you.  Ideally, your bin width will adapt to different types of distributions and be dependent on the sample size.  For example, if you only have 20 observations, you probably don't want a histogram with 30 bins!
+
+Demonstrate that your function works on:
+
++  One continuous variable from the `wine` dataset
+
+```{r, message=F, warning=F}
+ggplot(wine, aes(x = citric.acid)) +
+  geom_histogram(binwidth = auto_binwidth(wine$citric.acid))+
+  labs(title = "Histogram of citric acid",
+       x = "Citric acid (g/dm^3)")+
+  jingyuax_315_theme
+```
+
++  One continuous variable from the `food` dataset (from Lab 05)
+
+```{r, message=F, warning=F}
+food <- read.csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/food-facts.csv")
+
+ggplot(food, aes(x = energy_100g)) +
+  geom_histogram(binwidth = auto_binwidth(food$energy_100g))+
+  labs(title = "Histogram of energy per 100g food",
+       x = "Energy per 100g food")+
+  jingyuax_315_theme
+```
+
++  A random sample of size 100 from a Normal(mean = 0, sd = 1) distribution (use `rnorm()`)
+
+```{r, message=F, warning=F}
+sample1 <- rnorm(n = 100)
+sample1_df <- data.frame(sample1)
+ggplot(sample1_df, aes(x = sample1)) +
+  geom_histogram(binwidth = auto_binwidth(sample1))+
+  labs(title = "Distribution of norm(0, 1)",
+       x = "norm(0,1) random samples")+
+  jingyuax_315_theme
+```
+
++  A random sample of size 10000 from a Normal(mean = 0, sd = 100) distribution (use `rnorm()`)
+
+```{r, message=F, warning=F}
+sample2 <- rnorm(n = 10000, mean = 0, sd = 100)
+sample2_df <- data.frame(sample2)
+ggplot(sample2_df, aes(x = sample2)) +
+  geom_histogram(binwidth = auto_binwidth(sample2))+
+  labs("Distribution of norm(0, 100)", 
+       x = "norm(0, 100) random samples")+
+  jingyuax_315_theme
+```
+
+***
+***
+
+
+#  Practice Exam Problems:  6 & 7
+
+***Instructions:  Practice Lab Exam***
+
++  Problems 6 and 7 are practice lab exam problems.
++  You should expect to see more questions like this (open-ended) on both the lab exam and for the remainder of the semester.
++  For these practice exam questions, be sure to answer the question(s) asked.
++  In addition to answering the questions asked, **write 1-3 sentences describing why you made certain choices in your graphic.**  For example, why did you choose a histogram vs. density plot?  Pie chart vs. rose diagram vs. bar chart vs. spine chart?  Stacked vs. side-by-side vs. proportional bar chart vs. mosaic plot?  Why did you choose the bin width / number of bins in your histogram?  Why did you choose the bandwidth and kernel that you picked in your density plot?  Why did you decide to arrange the graphs the way you did (e.g. in a grid, horizontally, vertically).  Etc.
++  Remember, whenever you can supplement your answer with information from a statistical test, this is very beneficial!  Feel free to run statistical tests and include this information as part of your answer.
++  If specified how many graphics you are permitted to use you should stick to the following rules: if you're using `facet_wrap()` or `facet_grid()`, this counts as a single graphic.  If you're using `grid.arrange()`, this counts as multiple graphics.
+
+
+***
+***
+
+## Problem 6
+
+Load the IMDB movie data from the course GitHub page at the following
+link:
+(https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/imdb_test.csv). **NOTE:
+This is NOT Matey's movies ratings data set.** The data is taken from
+Kaggle.  This is a heavily altered version of the original data.
+
+(20 points)
+
+**All About Content**
+
+a.  (4 points)  Characterize and vizualize the distribution of the `content_rating` of IMDB movies.  Describe any interesting features you see. Use at most one graphic for this problem.
+
+```{r, warning = F, message = F}
+IMDBdata <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/imdb_test.csv")
+ggplot(IMDBdata, aes(x = content_rating))+
+  geom_bar()+
+  labs(title = "Bar Plot of Content Rating",
+       x = "Content of movies")
+```
+
+It's interesting to see that there is almost no ratings provided for movies that are NC-17, and most rated movie is with R content. I chose bar graph for this question because bar plot is the most straight forward way to see the distribution and frequency count of a categorical data. So it works well for catigorical variable content_rating.
+
+b.  (4 points)  Compare the conditional distributions of whether or not a movie was a comedy given the `content_rating` of the movie.  Describe any interesting features you see.
+
+It's interesting to see that for PG-13, R and unrated movies, most of them are not comedy. I chose stacked bar plot because, first, bar plot is the most straight forward graphic for visualizing frequency count for categorical data. And I used stacked bars because we can easily see the conditional distribution of whether a movie is comedy, given movie contents, because it allows us to look at each bar (content), and examine the distribution of comedy variable within that bar.
+
+```{r, message=F, warning=F}
+IMDBdata <- IMDBdata  %>% mutate(comedy = grepl("Comedy", genres))
+ggplot(IMDBdata, aes(x = content_rating, fill = comedy))+
+  geom_bar()+
+  labs(title = "Bar plot of comedy given movie content",
+       x = "Content of movie",
+       fill = "Comedy or not")
+```
+
+
+c.  (4 points)  Which category of `content_rating` has the highest proportion of comedies?  Provide visual or statistical evidence, and explain how the evidence leads you to your answer.
+
+```{r, message=F, warning=F}
+IMDBdata <- IMDBdata  %>% mutate(comedy = grepl("Comedy", genres))
+ggplot(IMDBdata, aes(x = content_rating, fill = comedy))+
+  geom_bar(position = "fill")+
+  labs(title = "Proportional bar plot of comedy given movie content",
+       x = "Content of movie",
+       fill = "Comedy or not")
+```
+
+The category "PG" has the highest proportion of comedies. The visual evidence is shown above. I used a proportional stacked bar chart to visualize this. The advantage of using a proportional bar chart is that it made all the bars the same height, so we can focus on examing the proportion of comedy in each bar. Since there is no height difference, we can easily identify the proportion difference of comedies beween each content category.
+
+d.  (4 points)  Is the `content_rating` of IMDB movies independent of whether or not the movie is a comedy?  Provide visual or statistical evidence, and explain how the evidence leads you to your answer. 
+
+```{r, message=F, warning=F}
+library(matrixStats)
+source("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/code/geom_mosaic.R")
+
+IMDBdata <- IMDBdata  %>% mutate(comedy = grepl("Comedy", genres))
+ggplot(IMDBdata, aes(x = content_rating, y = comedy))+
+  geom_mosaic()+ mosaic_legend() +
+  labs(title = "Mosaic plot of comedy and movie content",
+       x = "Content of movie",
+       fill = "Comedy or not")
+
+tab6d <- table(IMDBdata$content_rating, IMDBdata$comedy)
+chisq.test(tab6d)
+```
+
+Content of IMDB movies is not independent of whether or not the movie is a comedy. The supporting evidence is the mosaic plot of content_rating and comedy. This is because, from the mosaic plot we can see that there are very red and very blue areas, meaning there present statistically significant positive and negative deviations from what would be expected under independence. I also performed a chi-square test on the two variables, where the p value is 2.2e-16, which is a lot less than 0.05, so we have sufficient evidence to reject the null hypothesis. Meaning the two variables comedy and content_rating are not independent.
+
+e.  (4 points)  Write 1-3 sentences, total, describing why you made certain choices in your graphics for parts c and d.
+
+Like I said above: For part c, I used a proportional stacked bar chart because it made all the bars the same height, so we can focus on examing the proportion of comedy in each bar. Since there is no height difference, we can easily identify the proportion difference of comedies beween each content category. For part d, I chose mosaic plot because mosaic plot is the easiest to see the outcome of a statistical test. It plots color each box according to the standardized Pearson residuals. So we can see clearly from the red and blue color whether there are statistically significant suggesting non-independence.
+
+f.  (BONUS:  4 points)  Your friend tells you that 4% of all movies are rated G, 15% are PG, 30% are PG-13, 43% are R, 0.5% are NC-17, and 7.5% of are N/A or Unrated.  Is there evidence to reject your friend's claim?  Provide visual or statistical evidence, and explain how this evidence leads you to your answer.
+
+```{r, message=F, warning=F}
+suggestedProportion <- c(0.075, 0.005, 0.15, 0.3, 0.43, 0.04)
+chisq.test(x = table(IMDBdata$content_rating), p = suggestedProportion)
+```
+
+There are sufficient evidence to reject the friend's claim, because the p-value for chi-square test is 0.0375, which is less than 0.05, so we reject his claim. Meaning that the percentage of content of movies are not the same as he suggested.
+
+##  Problem 7
+
+This problem also uses the IMDb data from Problem 6.
+
+(10 points)
+
+**Facebook Likes vs Year of Release**
+
++ Characterize the distribution of the log(total facebook likes of a movie on facebook). 
++ Create the variable `last_decade` which equals to "2010+" if year the movie was made was 2010 or later, "<2010" if it was made before 2010, and `NA` is the dataset doesn't know the title year.  What type of movies are more popular within each mode of the distribution of log(total facebook likes of a movie on facebook) -- those made after 2010 or those made before 2010?
+
+Use no more than one graphic to answer both questions above.
+
+**Make sure to also write 1-3 sentences describing why you made certain choices in your graphic.**
+
+```{r, message=F, warning=F}
+IMDBdata <- IMDBdata  %>% mutate(last_decade = ifelse(title_year >= 2010, "2010+","<2010"))
+
+ggplot(IMDBdata, aes(x = log(cast_total_facebook_likes), fill = last_decade)) + 
+  geom_histogram() +
+  labs(title = "Log total movie facebook likes by before or after year 2010",
+       x = "Log total movie facebook likes")
+```
+
+Movies made before 2010 is the most popular. I chose to use histogram my graphics because histogram shows the freqency count with bins. Since log(movie facebook likes) is a continuous variable, histogram works much better than bar plot. Then I created the histogram as a stacked histogram, because this can allow us to see the distribution of last_decade the most clearly. (xxx which variable to use?? cast total or movie likes)
+
+
+
