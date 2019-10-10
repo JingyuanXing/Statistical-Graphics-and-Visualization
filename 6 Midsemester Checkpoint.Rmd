@@ -1,0 +1,305 @@
+---
+title: "36-315 Homework 06, Fall 2019"
+author: "Jingyuan Xing"
+date: "Due Wednesday, Oct 9, 2019"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+## Lab Exam Practice
+
+***
+***
+
+Style Guide: Google
+
+***
+***
+#  Data:  Horse Racing in Hong Kong!
+
+For this assignment we will use **two** datasets on horse racing in Hong Kong. They can be found [here for the runs Data](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/runs.csv) and [here for the races Data](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/races.csv). Both datasets contain information on horse runs. Each line of runs.csv describes the characteristics of one horse run, in one of the races given in races.csv. You might find one or the other more useful to answer some of the problems, so be sure to understand the structure of both datasets. Descriptions of the two datasets can be found [here for the runs Data](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/runs_readme.txt) and [here for the races Data](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/races_readme.txt) correspondingly. 
+
+The data was originally taken from Kaggle and is the Horse Racing in HK. [More information is available here](https://www.kaggle.com/gdaley/hkracing/home). Keep in mind that the dataset has been modified to serve the purposes of our class!
+
+<div style="width:600px">
+![](http://4.bp.blogspot.com/_V4w18ZWaPas/THKlHfIeecI/AAAAAAAAGaM/9UquyHARQ-M/s1600/Horse-Racing-01.jpg)
+</div>
+
+
+```{r, message=F, warning=F}
+library(tidyverse)
+library(ggplot2)
+raceData <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/races.csv")
+runData <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/runs.csv")
+```
+
+```{r, warning = FALSE, message = FALSE}
+jingyuax_315_theme <-  theme_bw() + # White background, black and white theme
+  theme(panel.background = element_rect(fill = "white",
+                                colour = "lightgray",
+                                size = 0.5, linetype = "solid"),
+        text = element_text(size = 12, family = "Arial", face = "bold", color = "black"))
+```
+
+## Problem 1
+
+(14 points)
+
+Graph: (2 points)
+
+```{r, message=F, warning=F}
+ggplot(raceData, aes(x = race_class, fill = going))+
+    geom_bar()+
+    facet_wrap(venue ~ .)+
+    labs(title = "Bar plot of track condition given the race class",
+         x = "Class of the race",
+         fill = "Track condition")+
+    jingyuax_315_theme
+```
+
+(a) (3 points) Describe the marginal distribution of the race class variable. Describe all interesting features of the distribution that you can identify. 
+
+The marginal distribution of the race class variable shows that the most common class is class 4 and 3, and there are very few horses which belong to class less than 1 or class greater than 5.  
+
+(b) (3 points) Characterize the conditional distribution of the track condition given the race class.
+
+From the stacked bar graph we can see the conditional distribution of track condition given the race class by simply look at each individual bar. We can see that for all the classes, the most common track condition is good, followed by good to firm; and there is almost no track condition that are soft, wet fast, or wet slow.
+
+(c) (3 points) How do these distributions change with the change of the venue?
+
+With a faceted graph we can see the distribution changed with the change of the venue. For venue HV, classes of the race is mostly below class 5, with a very small number of outliers on the higher end. For venue ST, number of counts for all classes are more than that of HV, and there are a lot more higher classes (above 10 classes) for ST.
+
+(d) (3 points) Write 1-3 sentences describing why you made certain choices in your graphic.
+
+I chose bar plot because the race_class variable can be consider as a categorical variable in the way that the numbers are representing different classes of the race. Bar chart is the most straight forward way to show its marginal distribution. And for conditional distribution I chose stacked bar graph because we are able to see the conditional distribution of track condition given race class by simply look within each bar. To compare difference between change of the venue, I chose to facet on venue because facet graph is the best for making such comparison we need.
+
+
+## Problem 2
+
+(14 points)
+
+Graph: (2 points)
+
+```{r, message=F, warning=F}
+raceData_removeNA = drop_na(raceData)
+ggplot(raceData, aes(x = log(prize), fill = venue))+
+    geom_histogram()+
+    facet_wrap(factor(raceData$race_class))+
+    labs(title = "Histogram of log prize of the horse race by Race class",
+         x = "log prize of the race")+
+    jingyuax_315_theme
+```
+
+
+(a) (3 points) Characterize the distribution of log of the prize of the race. Be sure to remove any NA observations.
+
+The distribution of log of the prize of the race using is unimodal, with center and mode at around 13.5. It is very right skewed, with range start from 13, and extends all the way to 17.
+
+(b) (3 points) How does the distribution change within different race class? Which race classes yield the highest prizes? How would you order the race classes by price if you had to so naively?
+
+Within each race class, the log prize is less spreaded. Class 11 yeild the highest prizes. If we need to order the race classes by price, the rank would be class 4, 3, 5, 2, 1, 13, 12, 11,6, 0, and the rest of the classes with zero log prizes.
+
+(c) (3 points) How does the prize distribution change with venue? Does one of the two venues give higher prizes than the other one?
+
+The count for log prize is a lot more for venue ST than HV, because from the stacked histogram we can see the ST always yield higher counts than HV for all classes. Also ST definitely gives higher prizes than HV, because we can see that ST is the only venue which has counts at high log prizes.
+
+(d) (3 points) Write 1-3 sentences describing why you made certain choices in your graphic.
+
+I chose histogram because log of prize of the race is a continuous variable, so it's the best to use histogram to show the frequency count at different log prizes. To compare the distribution of log of prize across different classes, I chose to facet on the race_class variable because faceting allows us to make the comparison very easily. In order to further compare log prizes between different venue, I used stacked histogram because it color coded the venues using two different colors, so that we can see the difference very clearly.
+
+
+## Problem 3
+
+(14 points)
+
+Graph(s): (2 points)
+
+**For this problem, and this problem only, you will be allowed to present two graphs.**
+
+(a) (3 points) Characterize the distribution of the horses' finishing time. Describe any interesting features of the distribution.
+
+```{r, message=F, warning=F}
+ggplot(runData, aes(x = finish_time))+
+    geom_histogram()+
+    labs(title = "Histogram of horse finishing time",
+         x = "Horse finishing time (sec)")+
+    jingyuax_315_theme
+```
+
+It's interesting that there are gaps between finishing time, meaning horses are not closely following each other when finish.
+
+(b) (3 points) Use the following code to "merge" the `races` and `runs` data frames into the `races_runs` data frame. Be sure to understand the structure of this new table before you proceed.
+
+```{r}
+races_runs <- left_join(runData, raceData, by = c("race_id" = "race_id"))
+```
+
+It merged the raceData and runData by matching race_id.
+
+(c) (3 points) Characterize the conditional distributions of the horses' finishing time given the distance of the race. Comment on any differences of this plot from the plot in a. Furthermore, comment on all features of the conditional distribution plot that you find intersting.
+
+```{r, message=F, warning=F}
+ggplot(races_runs, aes(x = distance, y = finish_time))+
+    geom_point()+
+    labs(title = "Histogram of horse finishing time given distance of the race",
+         x = "Horse finishing time (sec)",
+         fill = "Distance")+
+    jingyuax_315_theme
+```
+
+We can see that in general the finishing time increase as the distance increase. This does make sense since it's obvious that it takes longer time to complete longer distance. However, it's interesting to see that there are some overlapping in finishing time for different distances. Meaning that some good horses complete longer distance even faster than other slower horses to complete shorter distance.
+
+(d) (3 points) Write 1-3 sentences describing why you made certain choices in your graphics.
+
+I chose to use histogram for part a because the horse finishing time with unit as seconds, is a continuous variable. Histogram is the best plot to capture the distribution of continuous variable. For part c I chose scatterplot because we want to find conditional distribution of a continuous variable (finish time), given a categorical variable (the set racing distance). We want to see values of finishing time, rather than merely counts, so I chose the scatterplot above to best represent the distribution.
+
+## Problem 4
+
+(14 points)
+
+Graph: (2 points)
+
+**For this problem focus only on races of distance = 1200. Exclude all other races from consideration**
+
+```{r, message=F, warning=F}
+races_runs_1200 <- races_runs[races_runs$distance == 1200,]
+
+mean(races_runs_1200$sec_time1)
+mean(races_runs_1200$sec_time2)
+ggplot(races_runs_1200, aes(x = sec_time1, y = sec_time2))+
+    geom_point(aes(color = factor(surface), shape = venue))+
+    labs(title = "Time for race leader to complete section 2 vs section 1",
+         x = "Time for 1st sectional point",
+         y = "Time for 2nd sectional point")+
+  jingyuax_315_theme
+```
+
+(a) (3 points) Is the time taken by the leader of the race to reach the end of the 1st sectional point in general smaller or larger than the time taken by the leader of the race to reach the end of the 2nd sectional point? What is the relationship between the former and the latter time?
+
+The time taken by the leader of the race to reach the end of the 1st sectional point in general larger than the time taken by the leader of the race to reach the end of the 2nd sectional point. There is a weak positive linear relationship between the former and later time.
+
+(b) (3 points) Is one of the surfaces turf and dirt faster than the other? Use the plot to justify your answer.
+
+ We distinguished different surface using different point colors. The number representing the type of race track surface is: 1 = dirt, 0 = turf. We can see from the color coded graph that surface 1, the dirt surface, is faster than the turf surface.
+
+(c) (3 points) Answer the above questions for each of the two possible venues Happy Valley (HV) and Shatin (ST). Does one of the venues exhibit faster times than the other one? Use the graph to justify your answer.
+
+We distinguished different venue using different point shapes. The round points are HV, the triangular points are ST. We can see from the point that almost all of the fastest points are triangularly shaped. Meaning ST is faster than HV.
+
+(d) (3 points) Write 1-3 sentences describing why you made certain choices in your graphics.
+
+I chose scatterplot for this problem because both time for 1st sectional point and time for 2nd sectional point are continutous variables. In order to find out the relationship between these two, scatterplot works the best. We can also easily find out informations about categorical variables such as surface and venue, by simply assigning them to corresponding color and shape of points on the plot.
+
+## Problem 5
+
+(14 points)
+
+Graph: (2 points)
+
+**For this problem focus only on the following three track conditions (i.e. the going variable) -- "GOOD", "GOOD TO YIELDING", "GOOD TO FIRM" and exclude all other observations**
+
+```{r, message=F, warning=F}
+races_runs_going <- races_runs[races_runs$going == "GOOD" | races_runs$going == "GOOD TO YIELDING" | races_runs$going == "GOOD TO FIRM",]
+
+races_runs_going$date <- as.Date(races_runs_going$date, "%Y-%m-%d")
+races_runs_going$month <- as.numeric(format(races_runs_going$date, "%m"))
+
+ggplot(races_runs_going, aes(x = factor(month), fill = factor(surface)))+
+  geom_bar()+
+  facet_wrap(going ~ .)+
+  labs(title = "Horse races by month",
+       x = "Month",
+       fill = "Surface")+
+  jingyuax_315_theme
+```
+
+(a) (3 points) Characterize the distribution of races per month. Describe any interesting features you see.
+
+From the plot we can see it's interesting that there are significantly fewer races in April and May than other months.
+
+(b) (3 points) Describe the conditional distribution of surface given month.
+
+Since for types of the race track surface, 1 = dirt, 0 = turf, We can see that the conditional distribution of surface given month is as such: the turf surface is much more commonly used in all of the months than the dirt surface.
+
+(c) (3 points) Does the track condition change throughout the months? Are some of the track conditions surface specific? Use the graph to justify your answer.
+
+Yes, the track condition does change throughout the months. Two of the track conditions are surface-specific. The "Good to firm" and "Good to yielding" conditions are only for turf surfaces.
+
+(d) (3 points) Write 1-3 sentences describing why you made certain choices in your graphics.
+
+I chose stacked bar plot because bar plot is the best and the simplist way to allow us see the marginal distribution of month. We can then look into the conditional distribution of surface with each month by simply looking at each stacked bar. Then I faceted the graph based on conditions, so that we can see the difference between months separately for each condition.
+
+
+## Problem 6
+
+(15 points)
+
+Graph: (3 points)
+
+**For this problem focus only on races with distances equal to 2000, 2200 or 2400 meters**
+
+```{r, message=F, warning=F}
+races_runs_2000_2200_2400 <- races_runs[races_runs$distance == 2000 | races_runs$distance == 2200 | races_runs$distance == 2400, ]
+
+races_runs_2000_2200_2400 <- mutate(races_runs_2000_2200_2400,
+                                    win_odds_rank = cut(win_odds, c(0, 20, 70, Inf),
+                                                        labels = c(1, 2, 3)))
+
+ggplot(races_runs_2000_2200_2400, aes(x = win_odds_rank, y = finish_time, fill = win_odds_rank))+
+  geom_boxplot(position = "dodge")+
+  facet_wrap(distance ~ .)+
+  labs(title = "Finishing time by the win odds rank",
+       x = "Win odds rank",
+       y = "Finishing time",
+       fill = "Win odds")+
+  jingyuax_315_theme
+```
+
+(a) (4 points) Using the winning odds for a horse at the start of the race, create a discretized variable which takes values 1 when the winning odds are between (0,20], 2 when the winning odds are (20, 70] and 3 when the winning odds are above 70.
+
+(b) (4 points) We are interested in whether the finishing time is faster when the variable you created in (a) is 1 compared to when this variable is 2 or 3. Present a graph that compares the finishing time within the levels of the variable created in (a). The finishing time is also related to the distance of the race, so do not forget to also take this into account. Comment on all interesting results form this graph.
+
+From the graph we can see that the winning time is indeed faster when the variable "win_odds_rank" which we created in a is 1. And this is true across all three race distances. It's interesting and probably worth noting that there are more outliers on the slower end of the boxplot than on the faster end.
+
+(c) (4 points) Write 1-3 sentences describing why you made certain choices in your graphics.
+
+I chose boxplot because it allows us to do two things at once. First, it allow us to see the distribution of finish time very clearly. Since finish time is a continuous variable, we want to see the distribution of values of it, rather than just counts. The side-by-side boxplot makes it very easy for us to compare across different win odds. Finally I faceted on the distance of race to make the result more informative and meaningful, since the finish time depends hugely on distance, so we want to separate it out.
+
+
+
+## Problem 7
+
+(15 points)
+
+Graph: (3 points)
+
+```{r, message=F, warning=F}
+races_runs <- transform(races_runs, speed = distance/finish_time)
+races_runs_2000_2200 <- races_runs[races_runs$distance == 2000 | races_runs$distance == 2200,]
+
+ggplot(races_runs_2000_2200, aes(x = horse_rating, y = speed, color = factor(distance)))+
+  geom_point()+
+  geom_smooth(method = lm, se = FALSE)+
+  labs(title = "Speed vs horse rating",
+       x = "Horse rating",
+       y = "Speed")+
+  jingyuax_315_theme
+```
+
+(a) (3 points) Using the distance and finish time variables, create a variable `speed` that equals the average speed of each horse in its race.
+
+(b) (3 points) Only consider races with a distance of 2000 m or 2200 m in this problem. What is the trend of the relationship between horse rating and `speed`?
+
+There is a moderate to strong, positive, linear relationship between speed of horses and horse rating.
+
+(c) (3 points) Suppose you wanted to predict `speed` as a linear function of horse rating. Would you use the same linear model to predict average speed for a distance of 2000 m and a distance of 2200 m? (Do not compute the coefficients, but plot the line(s) on your graph.)
+
+No, I would definitiely use different linear model to predict average speed for the two different distances.
+
+(d) (3 points) Write 1-3 sentences describing why you made certain choices in your graphics.
+
+I chose scatterplot because both speed and horse rating are continuous variables. For part c, before putting on the linear model lines, I first colored points for distance 2000 and 2200 with different colors, so that I can easily identify if there are any difference between them.
+
