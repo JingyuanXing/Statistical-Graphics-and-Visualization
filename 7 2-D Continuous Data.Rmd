@@ -1,0 +1,246 @@
+---
+title: "36-315 Lab 07"
+author: "Jingyuan Xing"
+date: "Due Friday, Oct 11, 2019 (6:30pm)"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+
+##  Lab 07:  2-D Continuous Data
+
+***
+***
+
+Google Style Guide
+
+***
+***
+
+```{r message = F, warning = F}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Load the Data
+
+```{r, message=F, warning=F}
+olive <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/olive_oil.csv")
+```
+
+Brief data description:  
+
++  Groups:  Two choices -- three macro-`area`s and nine specific `region`s in Italy
++  Covariates:  Eight variables (chemical measurements on acid components of oil)
+
+[For more information on the data, see here.](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/olive_desription.txt)
+
+Note:  The units are on the variables in this dataset are a little confusing, so don't worry about including units on your graphs this week.
+
+<div style="width:350px">
+![](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/images/italy.png)
+</div>
+
+***
+***
+
+
+#  Problem 0
+
+(0 points)
+
+```{r, message=F, warning=F}
+jingyuax_315_theme <-  theme_bw() + # White background, black and white theme
+  theme(panel.background = element_rect(fill = "white",
+                                colour = "lightgray",
+                                size = 0.5, linetype = "solid"),
+        text = element_text(size = 12, family = "Arial", face = "bold", color = "black"))
+```
+
+
+# Problem 1
+
+(10 points each)
+
+**Pairs Plots for a Quick Data Assessment**
+
+a.  Create a subset of the `olive` dataset.  Include the `area` and `region` variables in your subset, and pick three continuous variables to include in your subset (your choice).  Keep all rows of the dataset.  (The `dplyr::` portion of the above line of code tells `R` to use the `select()` function the `dplyr` package.  This is a useful trick when there are multiple functions with the same name across different packages.  If the first package you load is the `tidyverse` or `dplyr` package, you do not need this portion of the code.)
+
+```{r, message=F, warning=F}
+olive_sub <- dplyr::select(olive, palmitic, palmitoleic, stearic, area, region)
+```
+
+b.  In your subset, overwrite the `area` and `region` variables so that they each area is associated with its area name, and each region is associated with its region name. Read the description of the data  [here](https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/olive_desription.txt) for the names.  They are listed in order.
+
+```{r, message=F, warning=F}
+levels(olive_sub$area)[1] <- "South"
+levels(olive_sub$area)[2] <- "Sardinia"
+levels(olive_sub$area)[3] <- "North"
+olive_sub$area <- as.factor(olive_sub$area)
+
+levels(olive_sub$region)[1] <- "North Apulia"
+levels(olive_sub$region)[2] <- "South Apulia"
+levels(olive_sub$region)[3] <- "Calabria"
+levels(olive_sub$region)[4] <- "Sicily"
+levels(olive_sub$region)[5] <- "Umbria"
+levels(olive_sub$region)[6] <- "East Liguria"
+levels(olive_sub$region)[7] <- "West Liguria"
+levels(olive_sub$region)[8] <- "Inland"
+levels(olive_sub$region)[9] <- "Costal"
+olive_sub$region <- as.factor(olive_sub$region)
+```
+
+c.  Create a pairs plot of your subset.  You'll need to install the `GGally` package to do this.  Use your new `area` variable as the color variable in your pairs plot.  Describe any interesting features you see.
+
+A "pairs plot" is a useful plot when you want a quick overview of the dataset without doing too much work.  Here's an explanation of what the (default) pairs plot shows:
+
++  On the diagonal, a the marginal distribution of a single variable is plotted.  For categorical variables, a bar chart is used.  For continuous variables, a density estimate is used.
++  On the off-diagonals, pairs of variables are plotted against each other.
++  For pairs of categorical variables, a facetted bar chart is shown.  On each side of the diagonal, the marginal / conditional variables are flipped so that you can see both versions of the graph.
++  For pairs of continuous variables, a scatterplot is shown.  On the other side of the diagonal, the correlation of the two variables is shown.
++  For pairs of mixed variables (one categorical, one continuous), either a facetted histogram (on one side of the diagonal) or a facetted box plot (on the other side of the diagonal) is shown.
++  If a color variable is supplied, all graphs and statistics are split by the categories of the color variable.
+
+I wouldn't recommend using pairs plots in assignments or formal reports.  They're more useful for you -- the statistician / data scientist -- to get a quick overview of the dataset than they are to communicate useful information to your viewers.
+
+```{r, message=F, warning=F}
+library(GGally)
+ggpairs(olive_sub, mapping = ggplot2::aes(color = as.factor(area)))
+```
+
+d.  From your pairs plot in (c), find the pair of continuous variables with the lowest (in absolute value) correlation.  Create a scatterplot of this pair of variables.  Color the points in your scatterplot according to the `region` of each observation.  Let the point type (`shape`) of your observation depend on the `area`.
+
+```{r, message=F, warning=F}
+ggplot(olive_sub, aes(x = stearic, y = palmitic))+
+  geom_point(aes(color = region, shape = area))+
+  labs(title = "Scatterplot of palmitic vs stearic",
+       x = "Stearic Acid",
+       y = "Palmitic Acid")+
+  jingyuax_315_theme
+```
+
+e.  Describe any interesting features you see in your graph from part (d).  In particular, do the areas and regions appear to be associated or grouped with each other?
+
+It's interesting to see that olive oil from area 1 (the southern area) typicallly has higher palmitic than area 2 and 3. We also observed that areas and regions does appear to be associated with each other, since all of the points of region 1-4 has round shape; all of the points of region 5-7 has triangular shape; all of the points of region 8-9 has squared shape. We can also see a possible group for those with higher and lower palmitic (above and below 1200 palmitic).
+
+
+***
+***
+
+
+# Problem 2
+
+(10 points each)
+
+**Density Estimates and Heat Maps**
+
+
+
+a.  Recreate your graph from part (d) of Problem 1, but this time, overlay a 2-D density estimate of the overall joint distribution of the  two continuous variables in the form of a contour plot.
+
+```{r, message=F, warning=F}
+ggplot(olive_sub, aes(x = stearic, y = palmitic))+
+  geom_point(aes(color = region, shape = area))+
+  geom_density_2d(contour = TRUE)+
+  labs(title = "Scatterplot of palmitic vs stearic, with contour",
+       x = "Stearic Acid",
+       y = "Palmitic Acid")+
+  jingyuax_315_theme
+```
+
+b.  From your graph in (a), are there any modes / groups apparent in the data?  Do the groups correspond to any of the areas or regions?
+
+Yes, there appear to be two modes/groups in the data. Looks like area 1 forms its own group, and area 2 and 3 is another group.
+
+c.  Create a heat map of the two variables you used in your scatterplot from Problem 1, part (d).  Use a non-default color scheme in your heatmap.
+
+```{r, message=F, warning=F}
+ggplot(olive_sub, aes(x = stearic, y = palmitic))+
+  geom_bin2d(bins = 30)+
+  scale_fill_gradient(low =  "pink", high = "red")+
+  labs(title = "Heatmap of palmitic vs stearic",
+       x = "Stearic Acid",
+       y = "Palmitic Acid")+
+  jingyuax_315_theme
+```
+
+
+
+***
+***
+
+
+# Problem 3
+
+**Around the World**
+
+```{r message = F, warning = F}
+gm <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/gapminder.csv")
+gm_sub <- gm %>% filter(year > 2000) #data we would actually use.
+```
+
+This dataset contains information about life expectancy, population and GDP per capital collected in 2002 and 2007 for countries around the world. We're going to use it to explore the relationships between gdp and life expectancy across continents.
+
+a. (5 points) Create a scatter plot between the log10 transform of GDP per capita and life expectancy, coloring on `continent`.
+
+```{r message = F, warning = F}
+ggplot(gm_sub, aes(x = log10(gdpPercap), y = lifeExp, color = continent))+
+  geom_point()+
+  labs(title = "Scatterplot of log10(GDP per capita) vs life expectancy",
+       x = "Log10(GDP per capita)",
+       y = "Life expectancy",
+       fill = "Continent")+
+  jingyuax_315_theme
+```
+
+b. (5 points) What patterns can you see? **Describe the relationship and joint distribution between `lifeExp` and `log10(gdpPercap)` overall and conditional on continent.** (Kinda expecting $> 3$ sentences.)
+
+
+
+c. (5 points) Try fitting a linear regression `geom_smooth(method = "lm") and a non-parametric regression relating the log10 transform of GDP per capita and life expectancy (we only want 1 line per regression).  Which do you prefer for this data set and why (which makes more sense/ fit the data better)? 
+
+```{r message = F, warning = F}
+ggplot(gm_sub, aes(x = log10(gdpPercap), y = lifeExp))+
+  geom_point(aes(color = continent))+
+  geom_smooth(method = lm)+
+  geom_smooth(method = loess)+
+  labs(title = "Scatterplot of log10(GDP per capita) vs life expectancy",
+       x = "Log10(GDP per capita)",
+       y = "Life expectancy",
+       fill = "Continent")+
+  jingyuax_315_theme
+```
+
+I would prefer the non-parametric regression since it fits the data better. There is a clear curve in terms of how the data is distributed, it's not linear.
+
+d. (5 points) How should we interpret the regression lines' confidence? In earlier statistics classes you saw confidence intervals for a mean value $\mu$ and linear regression coefficents $\beta$. Similar to these confidence intervals, confidence bands provide regions that, under assumptions of models, we'd expect to be able to capture the true regression curve in the confidence band $1 - \alpha$ proportion of the time we drew samples from data with the regression as the truth. Additionally recall that the regression function is just a function that defined the mean value of $Y$ given $X$.
+
+Nice interpretive properties:
+
++ if a confidence band (especially from a regression function) can include a flat line (with $slope = 0$) then we cannot reject the idea (hypothesis) that there is no relationship (or at least linear relationship if a linear regression) between $X$ and $Y$.
+
++ if two confidence bands overlap for their entirety of the range of $X$, then we cannot reject that both groups have the same regression function.
+
+We expect to be able to capture the true regression curve in the confidence band 1−0.05 = 95% of the time we drew samples from data with the regression as the truth. 
+
+e. (Bonus: 5 points) Looking at the code below, what does `level = .98` do in the geom_smooth (leave this at `.95` unless you have a legitimate reason not too)? Using the statements in (d): Is there a statistically significant linear relationship between `log10(gdpPercap)` and `lifeExp` for countries in the the continent of Asia? Can you conclude that the linear relationship between `log10(gdpPercap)` and `lifeExp` for countries in Asia is different that for countries in Europe? 
+
+```{r}
+ggplot(gm_sub %>% filter(continent %in% c("Asia", "Europe")), 
+       aes(x = log10(gdpPercap), y = lifeExp)) + 
+  geom_point(aes(color = continent)) +
+  geom_smooth(aes(color = continent), method = "lm", level = .98) +
+  labs(color = "Continent",
+       x = "log10(GDP per Capita)",
+       y = "Average Life Expectancy",
+       title = "Life Expectancy and GDP per Capita")
+```
+
+Level = 0.98 sets the confidence interval to 98%, which is wider than the 95% confidence interval.      
+
+There is a statistically significant linear relationship between `log10(gdpPercap)` and `lifeExp` for countries in the the continent of Asia because the confidence interval cannot include a flat line, so we reject that there is no linear relationship between lifeExp and log10(GDP per capita), meaning there is a linear relationship between them.  
+
+We can conclude that the linear relationship between lifeExp and log10(GDP per capita) is different for Asia and Europe, because the two confidence intervals don't overlap for their entire range of X. So we can reject the statement that the two group have the same linear regression function, meaning the relationship is different.
