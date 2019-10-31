@@ -1,0 +1,216 @@
+---
+title: "36-315 Homework 07, Fall 2019"
+author: "Jingyuan Xing"
+date: "Due Wed Oct 30 2019 (11:00pm ET) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+#  Homework 07:  Higher Dimensional Continuous Data
+
+***
+***
+
+#  Problem 0
+
+Google Style Guide is used.
+
+
+***
+***
+
+
+#  Problem 1 {.tabset}
+
+(3 points each)
+
+**Text Annotations on Graphs**
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+jingyuax_315_theme <-  theme_bw() + # White background, black and white theme
+  theme(panel.background = element_rect(fill = "white",
+                                colour = "lightgray",
+                                size = 0.5, linetype = "solid"),
+        text = element_text(size = 12, family = "Arial", face = "bold", color = "black"))
+```
+
+##  Part (a)
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(x = displ, y = cty))+
+    geom_text(aes(label = manufacturer))+
+    labs(title = "City Miles Per Gallon vs Engine Displacement",
+         x = "Engine Displacement (Liters)",
+         y = "City Miles Per Gallon")+
+    jingyuax_315_theme
+```
+
+##  Part (b)
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(x = displ, y = cty))+
+    geom_text(aes(label = manufacturer, color = factor(drv)), angle = 30)+
+    scale_color_manual(values=c("darkviolet", "deepskyblue", "orangered"))+
+    labs(title = "City Miles Per Gallon vs Engine Displacement",
+         x = "Engine Displacement (Liters)",
+         y = "City Miles Per Gallon",
+         color = "Wheel Drive")+
+    jingyuax_315_theme
+```
+
+## Part (c)
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(mpg, aes(x = displ, y = cty))+
+    geom_text(aes(label = manufacturer, color = factor(drv), size = hwy), angle = 30)+
+    scale_color_manual(values=c("darkviolet", "deepskyblue", "orangered"))+
+    labs(title = "City Miles Per Gallon vs Engine Displacement",
+         x = "Engine Displacement (Liters)",
+         y = "City Miles Per Gallon",
+         color = "Wheel Drive",
+         size = "Highway Miles/Gallon")+
+    jingyuax_315_theme
+```
+
+##  Part (d)
+
+Five variables are included in this graph, they are displ (engine displacement), cty (city miles per gallon), manufacturer, drv (front/back/four wheel drive), and hwy (highway miles per gallon). From the graph we can see that there is a moderate negative relationship between city miles per gallon and engine displacement, the relationship is not exactly linear, it looks more like a 1/x relationship. We can also see that highway miles per gallon is positively correlated with cty, because the larger y is, the larger the text size is; and highway miles per gallon is negatively correlated with engine displacement, because the smaller x is, the larger the text size is. front-wheel drive has the highest cty and lowest displ, 4-wheel drive is in the middle, and back-wheel drive has the lowest cty and highest displ.
+
+
+***
+***
+
+
+#  Problem 2 {.tabset}
+
+(2 points each)
+
+**More Text Annotations on Graphs**
+
+##  Part (a)
+
+```{r, warning = F, message = F}
+ggplot(mpg, aes(x = drv))+
+  geom_bar(color = "black", fill = "light pink")+
+  geom_text(stat = "count", aes(y = ..count.., label = ..count..), vjust = -0.5)+
+  labs(title = "Bar Graph of Wheel Drive",
+       x = "Wheel Drive",
+       y = "Counts for Each Wheel Drive")+
+  jingyuax_315_theme
+```
+
+##  Part (b)
+
+```{r, warning = F, message = F}
+ggplot(mpg, aes(x = class))+
+  geom_bar(color = "black", fill = "light pink")+
+  geom_text(stat = "count", aes(y = 0.5 * (..count..), label = ..count..), vjust = 0.5, size = 5)+
+  labs(title = "Bar Graph of Car Class",
+       x = "Car Class",
+       y = "Counts for Each Wheel Drive")+
+  jingyuax_315_theme
+```
+
+##  Part (c)
+
+```{r, warning = F, message = F}
+ggplot(mpg, aes(x = class))+
+  geom_bar(color = "black", fill = "light pink")+
+  geom_text(stat = "count", aes(y = 0.5 * (..count..), label = scales::percent((..count..) / sum(..count..))), vjust = 0.5, size = 5)+
+  labs(title = "Bar Graph of Car Class",
+       x = "Car Class",
+       y = "Counts for Each Wheel Drive")+
+  jingyuax_315_theme
+```
+
+***
+***
+
+
+
+#  Problem 3 {.tabset}
+
+**Hierarchical Clustering and Dendrograms**
+
+```{r, message=F, warning=F}
+olive <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/olive_oil.csv")
+```
+
+## Part (a)  
+
+```{r, message=F, warning=F}
+olive_cont <-subset(olive, select = -c(area, region))
+olive_cont_scale <- scale(olive_cont)
+dist_olive <- dist(olive_cont_scale)
+```
+
+##  Part (b)
+
+```{r, message=FALSE, warning=FALSE}
+hc_olive_complete <- hclust(dist_olive, method = "complete")
+names(hc_olive_complete)
+```
+
+```{r, message=FALSE, warning=FALSE}
+hc_olive_complete$method
+```
+
+The object hierarchical clustering is storing merge, height, order, labels, method, call, and dist.method. The hc_olive_complete$method is storing the method we are using when we build it, the method is complete.
+
+##  Part (c)
+
+```{r, message=FALSE, warning=FALSE}
+plot(hc_olive_complete, hang = -1, xlab = "")
+```
+
+plot( ) choose dendrograms to visualize hierarchical clustering results.
+
+##  Part (d) 
+
+The maximum distance at which two groups are linked is around 10.5.
+
+##  Part (e)
+
+Roughly 60% of the observations are in the left branch, and 40% of the observations are in the right branch of the final interation of hierarchical clustering.
+
+##  Part (f)
+
+```{r, message=FALSE, warning=FALSE}
+labels_complete_2 <- cutree(hc_olive_complete, k = 2)
+typeof(labels_complete_2)
+length(labels_complete_2)
+```
+
+The type of labels_complete_2 is integer. There are 572 elements contained in labels_complete_2.
+
+##  Part (g)
+
+```{r, message=FALSE, warning=FALSE}
+table(labels_complete_2) / nrow(olive)
+```
+
+The exact proportion of observations in the two groups being linked at the final iteration of hierarchical clustering is 32.34266% and 67.65734%, respectively.
+
+##  Part (h)
+
+```{r, message=FALSE, warning=FALSE}
+labels_complete_3 <- cutree(hc_olive_complete, k = 3)
+olive_mds <- as.data.frame.matrix(cmdscale(dist_olive))
+olive_mds <- olive_mds %>% mutate(area = as.factor(olive$area),
+                                  region = as.factor(olive$region),
+                                  labels_complete_3 = as.factor(labels_complete_3))
+ggplot(olive_mds, aes(x = V1, y = V2))+
+  geom_text(aes(color = area, label = labels_complete_3))+
+  scale_color_manual(values=c("darkviolet", "deepskyblue", "orangered"))+
+  labs(title = "Scatterplot of The First vs The Second MDS coordinate",
+       x = "The First MDS Coordinate",
+       y = "The Second MDS Coordinate")+
+  jingyuax_315_theme
+```
+
+The cluster labels doesn't exactly correspond to area. Points with the same color on the graph (area) don't always have the point type (cluster label). We can see that parts of cluster 1 and cluster 2 are both purple; and part of cluster 1 and cluster 3 are both orange. Cluster 1 is split into orange and purple areas; cluster 2 is split into red and green areas.
