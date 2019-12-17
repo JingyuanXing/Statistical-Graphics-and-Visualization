@@ -1,0 +1,604 @@
+---
+title: "36-315 Homework 08, Fall 2019"
+author: "Jingyuan Xing"
+date: "Due Wed, Nov 6 2019 (11:00pm ET) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  hide
+---
+
+##  Homework 08
+
+
+***
+***
+
+
+#  Problem 0
+
+**Organization, Themes, and HTML Output**
+
+(5 points)
+
+Google Style Guide is used
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+
+jingyuax_315_theme <- theme(panel.background = element_rect(size = 0.5, linetype = "solid"),
+                            legend.justification = "top",
+                            text = element_text(size = 10, family = "Arial", color = "black"))
+```
+
+
+***
+***
+
+
+#  Problem 1 {.tabset}
+
+(2 points each)
+
+**Parallel Coordinates and Radar Charts**
+
+
+## Part (a)
+
+```{r, warning = F, message = F}
+library(MASS)
+library(tidyverse)
+library(GGally)
+data(Cars93)
+cont_cols <- which(names(Cars93) %in% 
+                     c("Cars93", "Price", "MPG.city", "MPG.highway", "EngineSize",
+                       "Horsepower", "RPM", "Fuel.tank.capacity", "Passengers",
+                       "Length", "Wheelbase", "Width", "Turn.circle", "Weight"))
+
+ggparcoord(Cars93, columns = cont_cols) + aes(color = factor(Type))+
+  scale_color_manual(values=c("red", "pink", "skyblue", "blue", 
+                              "purple", "gold"))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  jingyuax_315_theme+
+  labs(title = "Continuous Variables of Cars93 by Different Type of Cars",
+       x = "Variables",
+       y = "Values",
+       color = "Type of Cars")
+```
+
+## Part (b)  
+
+Parallel Coordinate plot allows us to see all the values for each variable, for different type of cars ("Small", "Sporty", "Compact", "Midsize", "Large" and "Van"). Type 4 car has the best MPG.city and MPG.highway, meaning it get better mileage than others. TYpe 6 car fit the most passengers.
+
+## Part (c) 
+
+```{r, warning = F, message = F}
+ggparcoord(Cars93, columns = cont_cols) + aes(color = factor(Type))+
+  coord_polar()+
+  scale_color_manual(values=c("red", "pink", "skyblue", "blue", 
+                              "purple", "gold"))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  jingyuax_315_theme+
+  labs(title = "Radar Chart of Variables of Cars93 by Different Car Types",
+       x = "Variables",
+       y = "Values",
+       color = "Type of Cars")
+```
+
+I would say the parallel coordinate plot is easier to read, because we can see both high values and low values very clearly, whereas for the radar plot, it's very hard for us to see the low values.
+
+## Part (d)
+
+```{r, warning = F, message = F}
+ggparcoord(Cars93, columns = cont_cols, scale="center") + aes(color = factor(Type))+
+  scale_color_manual(values=c("red", "pink", "skyblue", "blue", 
+                              "purple", "gold"))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  jingyuax_315_theme+
+  labs(title = "Rafar Chart of Continuous Variables of Cars93 by Different Type of Cars",
+       x = "Variables",
+       y = "Values",
+       color = "Type of Cars")
+```
+
+The default y-axis  is scale = "std", which refers to normalize univariately (substract mean & divide by sd). We can scale the graph differently by changing the scale to "center", which is Standardize and center variables.
+
+## Part (e)
+
+From the graph we see that MPG.city and MPG.highway has most parallel lines in between them, so we could say that they are positively related. There are several negatively related pairs: Price and MPG.city, MPG.highway and EngineSize, Horsepower and RPM, RPM and Fuel tank capacity. We say that these pairs of variables are negatively related because in the parallel coordinate plot, the lines between these variabesl are crossing, forming a "X" shape, which indicates a negative correlation.
+
+
+***
+***
+
+
+
+#  Problem 2 {.tabset}
+
+(18 points)
+
+**Correlation Matrices for Examining Variable Relationships**
+
+## Part (a)
+(0 points) 
+
+```{r, warning = F, message = F}
+cars_cont <- dplyr::select(Cars93, Price, MPG.city, MPG.highway, EngineSize, 
+                           Horsepower, RPM, Fuel.tank.capacity, Passengers,
+                           Length, Wheelbase, Width, Turn.circle, Weight)
+```
+
+## Part (b) 
+(5 points) 
+
+```{r, warning = F, message = F}
+library(reshape2)
+correlation_matrix <- cor(cars_cont)
+melted_cormat <- melt(correlation_matrix)
+ggplot(data = melted_cormat, aes(x = Var1, y = Var2, fill = value)) + 
+  geom_tile()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  scale_fill_gradient2(low = "darkred", mid = "lightgrey", high = "darkblue", limits = c(-1,1))+
+  jingyuax_315_theme+
+  labs(title = "Correlation Heap Map of Continuous Variables in Cars93",
+       x = "Variables",
+       y = "Variables",
+       fill = "Correlation values")
+```
+
+## Part (c)
+(5 points)  
+
++ These pairs of variables are highly positively correlated: Fuel tank capacity and weight, MPG.city and MPG.highway.
++  These pairs of variables are highly negatively correlated: MPG.city and weight, MPG.city and Fuel tank capacity.
++  These paris of variables have approximately no correlation: Passenger and horsepower, RPM and horsepower.
+
+## Part (d)
+(2 points)   
+This plot is similar to the traditional heat map, where we aimed to discover relationships between paris of quantatitive variables in the Cars93 dataset. It tells us pari-wise correlations.
+
+## Part (e)
+(1 point)    
+This remind me of mosaci plot.
+
+## Part (f)
+(5 points)  Recreate the graph in (b), making the following additional adjustments to the correlation matrix:
+
+```{r, warning = F, message = F}
+correlation_matrix[lower.tri(correlation_matrix)] <- NA
+melted_cormat <- melt(correlation_matrix)
+ggplot(data = melted_cormat, aes(x = Var1, y = Var2, fill = value)) + 
+  geom_tile()+
+  geom_text(aes(label = round(value, digits = 2)), size = 3)+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  scale_fill_gradient2(low = "darkred", mid = "lightgrey", high = "darkblue", limits = c(-1,1))+
+  jingyuax_315_theme+
+  labs(title = "Correlation Heap Map of Continuous Variables in Cars93",
+       x = "Variables",
+       y = "Variables",
+       fill = "Correlation values")
+```
+
+***
+***
+
+
+
+#  Problem 3 {.tabset}
+
+(20 points)
+
+**Variable Dendrograms**
+
+## Part (a)  
+(15 points) 
+
+```{r, warning = F, message = F}
+library(dendextend)
+cars_correlation_matrix <- cor(cars_cont)
+cars_correlation_matrix <- 1 - abs(cars_correlation_matrix)
+cars_dend <- correlation_matrix %>% dist %>% hclust %>% as.dendrogram
+
+cols = c("red", "orange", "purple", "skyblue")
+plot(cars_dend 
+     %>% set("branches_k_color", k=4)
+     %>% set("branches_col", cols)
+     %>% set("branches_lwd", 2),
+     xlab = "Variables", ylab = "Height", main = "Dendrogram of Continuous Variables in Cars93")+
+  jingyuax_315_theme
+```
+
+
+## Part (b)  
+(5 points) 
+
+Cluster 1: RPM; Cluster 2: Passengers: Cluster 3: Price and Horsepower; Cluster 4: MPG.city, MPG.highway, Fuel.tank.capacity, Weight, Length, Wheelbase, Turn.circle, EngineSize, and Width.  
+This does make sense because those variables which are in cluster 1 are the most correlated ones, some are strongly positively related, and some are strongly negatively related. This is also supported by the correlation plot we've created in problem 2: the most negatively correlated variables are MPG.city and weight, MPG.city and Fuel tank capacity; and the most positively correlated variables are Fuel tank capacity and weight, MPG.city and MPG.highway. Correlations in problem 2 also shows us that there's nearly no correlation between Passenger and horsepower, RPM and horsepower. This also agree with our clustering.
+
+## Part (c)
+(1 point) 
+  
+We can also identify similarity/ dissimilarity by comparing center (median, mean) and variation (standard deviation), etc.
+
+***
+***
+
+
+
+
+# Problem 4 {.tabset}
+
+
+## Part (a) 
+
+
+```{r, warning = F, message = F}
+library(igraph)
+g = barabasi.game(1000,power=1,directed=FALSE)
+plot(g, layout=layout.kamada.kawai, vertex.color="gold", vertex.size=1, vertex.label = NA, main = "Plot of g with kk layout")+
+  jingyuax_315_theme
+```
+
+
+## Part (b) 
+(2 points) 
+
+```{r, warning = F, message = F}
+library(ggraph)
+ggraph(g, layout = 'kk') + 
+  geom_edge_link() + 
+  geom_node_point()+
+  jingyuax_315_theme+
+  labs(title = "GGraph of g with kk layout")
+```
+
+## Part (c) 
+(2 points) 
+
+```{r, warning = F, message = F}
+V(g)
+length(V(g))
+E(g)
+gsize(g)
+edge_density(g)
+diameter(g)
+```
+
+
+## Part (d) 
+(6 points) 
+
+```{r, warning = F, message = F}
+d1 <- cluster_walktrap(g)
+plot(d1, g, vertex.color="gold", vertex.size=2, vertex.label = NA, main = "Plot of g using Community structure via greedy optimization of modularity")
+```
+
+```{r, warning = F, message = F}
+d2 <- cluster_edge_betweenness(g)
+plot(d2, g, vertex.color="gold", vertex.size=2, vertex.label = NA, main = "Plot of g using Community structure via greedy optimization of modularity")
+```
+
+
+The algorithm cluster_walktrap identifies the community strucure via short random walks. The algorithm cluster_edge_betweenness performs the community structure detection based on edge betweenness. I think walktrap does a better job because it tells us more about clustering.
+
+## Part (e) 
+(2 points) 
+
+```{r, warning = F, message = F}
+ggplot(as.data.frame(betweenness(g)), aes(x = betweenness(g)))+
+  geom_histogram(color = "black", fill = "pink") +
+  labs(title = "Histogram of Vertex and edge betweenness centrality of g", 
+       x = "Betweenness of g")
+```
+
+The histogram of Vertex and edge betweenness centrality of g centered at around 0, and is very unsymmertrical, in another word, it's skewed to the right, with a very long tail extend right-ward. It is unimodal, with the mode at around 0e+00.
+
+***
+***
+
+
+# Problem 5 {.tabset}
+
+
+```{r, warning = F, message = F}
+data(iris)
+X = log(iris[,1:4])
+```
+
+## Part (a) 
+(2 points) 
+
+```{r, warning = F, message = F}
+out = prcomp(X,center=TRUE,scale=TRUE)
+```
+
+According to help(prcomp), center = TRUE makes columns zero centered, scale = TRUE makes columns rescaled to unit variance.
+
+## Part (b) 
+(2 points) 
+
+```{r, warning = F, message = F}
+biplot(out)
+title("Biplot of the PCA output", line = 2)
+```
+
+## Part (c) 
+(2 points)
+
+```{r, warning = F, message = F}
+out_x <- data.frame(out$x)
+ggplot(out_x, aes(x = PC1, y = PC2, color = iris$Species))+
+  geom_point()+
+  scale_color_manual(values=c("purple", "pink", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Projection onto the first two PC by iris species",
+       x = "1st Principal Component",
+       y = "2nd Principal Component",
+       color = "Iris Species")
+```
+
+Yes the principal components do separate the species well.
+
+## Part (d) 
+(4 points) 
+
+```{r, warning = F, message = F}
+library(kernlab)
+ggplot(kpca(~., data=X, kernel="rbfdot", kpar=list(sigma=0.2),features=2)
+       %>% pcv
+       %>% as.data.frame
+       %>% mutate(species = iris$Species),
+       aes(x = V1, y = V2, color = species))+
+  geom_point()+
+  scale_color_manual(values=c("purple", "pink", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Projection onto the first two PC by iris species using Kernal PCA",
+       x = "1st Principal Component",
+       y = "2nd Principal Component",
+       color = "Iris Species")
+```
+
+
+## Part (e) 
+(2 points) 
+
+```{r, warning = F, message = F}
+library(tsne)
+
+ggplot(as.data.frame(tsne(X, perplexity = 30)), aes(x=V1, y=V2)) +  
+  geom_point(aes(color = iris$Species))+
+  scale_color_manual(values=c("purple", "pink", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Plot of tsne X with perplexity 30",
+       x = "1st Principal Component",
+       y = "2nd Principal Component",
+       color = "Iris Species")
+
+ggplot(as.data.frame(tsne(X, perplexity = 5)), aes(x=V1, y=V2)) +  
+  geom_point(aes(color = iris$Species))+
+  scale_color_manual(values=c("purple", "pink", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Plot of tsne X with perplexity 5",
+       x = "1st Principal Component",
+       y = "2nd Principal Component",
+       color = "Iris Species")
+```
+
+Perplexity controls the number of neighbours, so as perplexity increase, we observe that the data are more spread out; on the other hand, as perplexity decrease, we observe that the data are closer to each other.
+
+## Part (f) 
+(2 points)
+
+```{r, warning = F, message = F}
+library(mlbench)
+X = 4*mlbench.spirals(100,1,.025)$x
+
+ggplot(as.data.frame(X), aes(x = V1, y = V2))+
+  geom_point()+
+  jingyuax_315_theme+
+  labs(title = "Plot of ML benchmark spirals of X", 
+       x = "1st coordinate", 
+       y = "2nd coordinate")
+```
+
+
+## Part (g) 
+
+(4 points)
+
+```{r, warning = F, message = F}
+sc = specc(X, centers=2)
+
+ggplot(as.data.frame(X), aes(x = V1, y = V2, color = factor(sc)))+
+  geom_point()+
+  scale_color_manual(values=c("purple", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Plot of Sprial Clustering of ML benchmark spirals of X", 
+       x = "1st coordinate", 
+       y = "2nd coordinate",
+       color = "Spiral Clustering")
+```
+
+```{r, warning = F, message = F}
+km = kmeans(X, centers = 2)$cluster
+  
+ggplot(as.data.frame(X), aes(x = V1, y = V2, color = factor(km)))+
+  geom_point()+
+  scale_color_manual(values=c("purple", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Plot of K-means Clustering of ML benchmark spirals of X", 
+       x = "1st coordinate", 
+       y = "2nd coordinate",
+       color = "K-means Clustering")
+```
+
+Spiral clustering works better because it fits the pattern of data as it should be (two spirals), whereas k-means clustering simply divided the data points using a straight line, which does not represent the correct shape of distribution.
+
+#  Problem 6 {.tabset}
+
+(1 point each)
+
+**Arc Pie Charts**
+
+## Part (a)  
+
+```{r, warning = FALSE, message = FALSE, height = 6, width = 7}
+library(ggforce)
+Cars93 %>% group_by(Type) %>% 
+  summarize(count = n()) %>% 
+  mutate(max = max(count),
+         focus_var = 0.2 * (count == max(count))) %>%
+  ggplot() + geom_arc_bar(aes(x0 = 0, y0 = 0, r0 = 0.8, r = 1, 
+                              fill = Type, amount = count), 
+                          stat = 'pie')+
+  labs(title = "Arc Pie Chart of Car Types")
+```
+
+## Part (b)
+
+
+```{r, warning = FALSE, message = FALSE, height = 6, width = 7}
+Cars93 %>% group_by(Type) %>% 
+  summarize(count = n()) %>% 
+  mutate(max = max(count),
+         focus_var = 0.2 * (count == max(count))) %>%
+  ggplot() + geom_arc_bar(aes(x0 = 0, y0 = 0, r0 = 0.1, r = 1, 
+                              fill = Type, amount = count), 
+                          stat = 'pie')+
+  jingyuax_315_theme+
+  labs(title = "Arc Pie Chart of Car Types with small r0")
+```
+
+```{r, warning = FALSE, message = FALSE, height = 6, width = 7}
+Cars93 %>% group_by(Type) %>% 
+  summarize(count = n()) %>% 
+  mutate(max = max(count),
+         focus_var = 0.2 * (count == max(count))) %>%
+  ggplot() + geom_arc_bar(aes(x0 = 0, y0 = 0, r0 = 0.9, r = 1, 
+                              fill = Type, amount = count), 
+                          stat = 'pie')+
+  jingyuax_315_theme+
+  labs(title = "Arc Pie Chart of Car Types with big r0")
+```
+
+r0 controls the width of the ring, min is 0.0, where the ring becomes a full pie, max is 1.0, where the ring becomes a circle with zero width.
+
+## Part (c)
+
+
+```{r, warning = FALSE, message = FALSE, height = 6, width = 7}
+Cars93 %>% group_by(Type) %>% 
+  summarize(count = n()) %>% 
+  mutate(max = max(count),
+         focus_var = 0.2 * (count == max(count))) %>%
+  ggplot() + geom_arc_bar(aes(x0 = 0, y0 = 0, r0 = 0.8, r = 1, 
+                              fill = Type, amount = count,
+                              explode = focus_var), 
+                          stat = 'pie')+
+  jingyuax_315_theme+
+  labs(title = "Arc Pie Chart of Car Types")
+```
+
+It explode arc Midsize away from the center point, thus detaching it from the main pie/donut.
+
+## Part (d)
+
+
+```{r, warning = FALSE, message = FALSE, height = 6, width = 7}
+Cars93 %>% group_by(Type) %>% 
+  summarize(count = n()) %>% 
+  mutate(max = max(count),
+         focus_var = (count == min(count))) %>%
+  ggplot() + geom_arc_bar(aes(x0 = 0, y0 = 0, r0 = 0.8, r = 1, 
+                              fill = Type, amount = count,
+                              explode = focus_var), 
+                          stat = 'pie')+
+  jingyuax_315_theme+
+  labs(title = "Arc Pie Chart of Car Types")
+```
+
+## Part (e)
+The Arc Pie Chart is similar to pie chart in the sense that it represents the percentage distribution of datasets very clearly. The explode variable also provides a very good opportunity for us to be able to pick out/ highlight variables we want, for example, the min variable, the max variable, or any other variable that captures some feature that we are interested in. However, we should still aknowledge some disadvantages of the arc pie chart. Similar to pie chart, it doesn't tell you the exact frequency count.  
+
+***
+***
+
+
+
+#  Problem 7 {.tabset}
+
+(5 points each)
+
+**Zoom**
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(forcats)
+library(devtools)
+library(ggforce)
+
+#  Colorblind-friendly color pallette
+my_colors <- c("#000000", "#56B4E9", "#E69F00", "#F0E442", "#009E73", "#0072B2", 
+               "#D55E00", "#CC7947")
+
+#  Read in the data
+imdb <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/imdb_test.csv")
+
+# get some more variables
+imdb <- mutate(imdb, profit = (gross - budget) / 1000000,
+               is_french = ifelse(country == "France", "Yes", "No")) %>%
+  filter(movie_title != "The Messenger: The Story of Joan of Arc")
+france_1990 <- filter(imdb, country == "France", title_year >= 1990)
+
+# this code plots a scatterplot + a zoomed facet
+ggplot(data = imdb, aes(x = title_year, y = profit)) + 
+  geom_point(color = my_colors[1], alpha = 0.25) + 
+  geom_smooth(color = my_colors[2]) + 
+  geom_point(data = france_1990, color = my_colors[3]) + 
+  geom_smooth(data = france_1990, aes(x = title_year, y = profit), 
+              color = my_colors[4], method = lm) + 
+  facet_zoom(x = title_year >= 1990) + 
+  labs(title = "Movie Profits over Time",
+       subtitle = "Zoom:  French Movies from 1990 -- 2017 (orange/yellow)",
+       caption = "Data from IMDB and Kaggle",
+       x = "Year of Release",
+       y = "Profit (millions of USD)")
+```
+
+
+## Part (a)
+
+```{r, warning = FALSE, message = FALSE}
+raceData <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/races.csv")
+runData <- read_csv("https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/runs.csv")
+races_runs <- left_join(runData, raceData, by = c("race_id" = "race_id"))
+races_runs_1200 <- races_runs[races_runs$distance == 1200,]
+
+ggplot(races_runs_1200, aes(x = sec_time1, y = sec_time2))+
+  geom_point(aes(color = factor(surface), shape = venue))+
+  facet_zoom(x = sec_time1 >= 24.4)+
+  scale_color_manual(values=c("purple", "skyblue"))+
+  jingyuax_315_theme+
+  labs(title = "Time for race leader to complete section 2 vs section 1",
+       subtitle = "Zoom:  1st sectional point completed longer than 24.4s ",
+       caption = "Data from raceData and runData on github",
+       x = "Time for 1st sectional point",
+       y = "Time for 2nd sectional point",
+       color = "Surface")
+```  
+
+## Part (b)
+
+The zoomed graph allows us to see the distribution of a small subsection much more clearly than before. The graph is capturing the time for race leader to complete 1st and 2nd sectional point, by different venue and surfaces. by Zooming in, we get a much more detailed and spread out graph of data that are greater than 24.4s. Using this new plot, we are now able to see that there are a few blue dots in this section. The blue dots are mainly gathered at faster time area, and it was really hard for us to see these blue dots in the slower time area, now it become easier to see.
+
+
+
+***
+***
+
+
+
+***
+***
